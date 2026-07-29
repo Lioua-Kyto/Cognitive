@@ -1,0 +1,37 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "git.enabled": true,
+
+  "auto-run-command.delay": 1500,
+
+  "auto-run-command.commands": [
+    {
+      "when": "onStartupFinished",
+      "command": "workbench.action.terminal.new",
+      "runIn": "commandPalette"
+    },
+    {
+      "when": "onStartupFinished",
+      "command": "echo Auto run command is working",
+      "runIn": "terminal"
+    },
+    {
+      "when": "onStartupFinished",
+      "command": "workbench.action.terminal.split",
+      "runIn": "commandPalette"
+    },
+    {
+      "when": "onStartupFinished",
+      "command": "cd backend && py manage.py runserver",
+      "runIn": "terminal 1"
+    }
+  ]
+}

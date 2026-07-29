@@ -1,0 +1,48 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Frontend",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Start Backend",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe -m daphne backend.asgi:application --port 8000 --bind 0.0.0.0",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "DJANGO_SETTINGS_MODULE": "backend.settings"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Backend (ASGI)",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe manage.py runserver 8000",
+      "options": {
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "DJANGO_SETTINGS_MODULE": "backend.settings"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start All",
+      "dependsOn": ["Start Frontend", "Start Backend"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    }
+  ]
+}
