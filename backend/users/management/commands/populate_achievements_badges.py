@@ -6,10 +6,9 @@ class Command(BaseCommand):
     help = 'Populate the database with achievements and badges'
 
     def handle(self, *args, **options):
-        # Clear existing data
-        Achievement.objects.all().delete()
-        Badge.objects.all().delete()
-        
+        # No delete() pass here: Achievement and Badge cascade to UserAchievement
+        # and UserBadge, so re-seeding used to wipe every user's earned awards.
+
         achievements_data = [
             # Memory Achievements
             {
@@ -421,7 +420,7 @@ class Command(BaseCommand):
         # Create achievements
         created_achievements = 0
         for achievement_data in achievements_data:
-            achievement, created = Achievement.objects.get_or_create(
+            achievement, created = Achievement.objects.update_or_create(
                 name=achievement_data['name'],
                 defaults=achievement_data
             )
@@ -434,7 +433,7 @@ class Command(BaseCommand):
         # Create badges
         created_badges = 0
         for badge_data in badges_data:
-            badge, created = Badge.objects.get_or_create(
+            badge, created = Badge.objects.update_or_create(
                 name=badge_data['name'],
                 defaults=badge_data
             )

@@ -85,21 +85,14 @@ class UserGameProgressView(APIView):
 
     def get(self, request):
         game_name = request.query_params.get("game")
-        print(f"=== UserGameProgressView: Looking for game: '{game_name}'")
         
         if not game_name:
-            print("=== UserGameProgressView: No game name provided")
             return Response({"error": "Game name required."}, status=400)
         
-        # Debug: List all games in database
-        all_games = Game.objects.all()
-        print(f"=== UserGameProgressView: All games in DB: {[g.name for g in all_games]}")
         
         try:
             game = Game.objects.get(name=game_name)
-            print(f"=== UserGameProgressView: Found game: {game.name}")
         except Game.DoesNotExist:
-            print(f"=== UserGameProgressView: Game '{game_name}' not found in database")
             return Response({"error": f"Game '{game_name}' not found."}, status=404)
         
         # Get the best score from BestScore model
@@ -346,7 +339,6 @@ class UserStatsView(APIView):
             if played_at
         )
         
-        print(f"=== Streak Debug for user {user.username}: today={today}, play_dates={sorted(play_dates)}")
         
         current_streak = 0
         longest_streak = 0
@@ -356,7 +348,6 @@ class UserStatsView(APIView):
         check_date = today
         while check_date in play_dates:
             current_streak += 1
-            print(f"=== Streak: Found game on {check_date}, current_streak={current_streak}")
             check_date -= timedelta(days=1)
         
         # Calculate longest streak

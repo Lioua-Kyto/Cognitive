@@ -100,87 +100,35 @@ def get_user_profile(request, identifier):
 @permission_classes([permissions.IsAuthenticated])
 def get_user_stats(request, user_id):
     """Get comprehensive user statistics"""
-    try:
-        user = get_object_or_404(CustomUser, id=user_id)
-        print(f"=== Backend: Fetching stats for user {user_id}: {user.username}")
-        
-        # Get game statistics
-        from leaderboard.models import BestScore
-        
-        total_games = GameResult.objects.filter(user=user).count()
-        total_xp = getattr(user, 'experience', 0) or 0  # Handle missing field gracefully
-        try:
-            level = user.level
-        except Exception as e:
-            print(f"=== Backend: Error getting level: {e}")
-            level = 1
-        try:
-            global_rank = user.global_rank
-        except Exception as e:
-            print(f"=== Backend: Error getting global rank: {e}")
-            global_rank = None
-        
-        print(f"=== Backend: User stats - games: {total_games}, xp: {total_xp}, level: {level}, rank: {global_rank}")
-        
-        # Category-specific stats
-        categories = [key for key, _ in Game.CATEGORY_CHOICES]
-        category_stats = {}
-        
-        for category in categories:
-            try:
-                rank = user.get_category_rank(category) if hasattr(user, 'get_category_rank') else None
-                best_score = BestScore.objects.filter(
-                    user=user, 
-                    game__category=category
-                ).aggregate(best=Max('score'))['best']
-                
-                category_stats[category] = {
-                    'rank': rank,
-                    'best_score': best_score or 0,
-                    'has_played': rank is not None
-                }
-            except Exception as e:
-                print(f"=== Backend: Error getting stats for category {category}: {e}")
-                category_stats[category] = {
-                    'rank': None,
-                    'best_score': 0,
-                    'has_played': False
-                }
-        
-        print(f"=== Backend: Category stats: {category_stats}")
-        
-        # Get XP info safely
-        try:
-            xp_for_next_level = user.xp_for_next_level
-        except Exception as e:
-            print(f"=== Backend: Error getting xp_for_next_level: {e}")
-            xp_for_next_level = 1000
-        
-        try:
-            xp_progress = user.xp_progress_in_current_level
-        except Exception as e:
-            print(f"=== Backend: Error getting xp_progress: {e}")
-            xp_progress = 0
-        
-        stats_data = {
-            'total_games': total_games,
-            'total_xp': total_xp,
-            'experience': total_xp,
-            'level': level,
-            'global_rank': global_rank,
-            'category_stats': category_stats,
-            'xp_for_next_level': xp_for_next_level,
-            'xp_progress': xp_progress
+    user = get_object_or_404(CustomUser, id=user_id)
+
+    # One grouped query for every category instead of one aggregate per category.
+    best_by_category = dict(
+        BestScore.objects.filter(user=user)
+        .values_list('game__category')
+        .annotate(best=Max('score'))
+        .values_list('game__category', 'best')
+    )
+
+    category_stats = {}
+    for category, _ in Game.CATEGORY_CHOICES:
+        rank = user.get_category_rank(category)
+        category_stats[category] = {
+            'rank': rank,
+            'best_score': best_by_category.get(category, 0),
+            'has_played': rank is not None,
         }
-        
-        print(f"=== Backend: Returning stats data: {stats_data}")
-        return Response(stats_data)
-        
-    except Exception as e:
-        print(f"=== Backend: Error in get_user_stats: {e}")
-        import traceback
-        traceback.print_exc()
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({
+        'total_games': GameResult.objects.filter(user=user).count(),
+        'total_xp': user.experience,
+        'experience': user.experience,
+        'level': user.level,
+        'global_rank': user.global_rank,
+        'category_stats': category_stats,
+        'xp_for_next_level': user.xp_for_next_level,
+        'xp_progress': user.xp_progress_in_current_level,
+    })
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
@@ -229,7 +177,6 @@ def get_all_achievements(request):
         # Calculate progress percentage using our comprehensive system
         progress_percentage = get_achievement_progress(user, achievement) if not is_earned else 100
         
-        print(f"=== Achievement: {achievement.name} | Category: {achievement.category} | Progress: {progress_percentage}% | Earned: {is_earned}")
         
         achievements_data.append({
             'id': achievement.id,
@@ -295,7 +242,6 @@ def get_all_badges(request):
             user_badge = UserBadge.objects.get(user=user, badge=badge)
             earned_date = user_badge.earned_date
         
-        print(f"=== Badge: {badge.name} | Type: {badge.badge_type} | Earned: {is_earned}")
         
         badges_data.append({
             'id': badge.id,

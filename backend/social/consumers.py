@@ -1,10 +1,12 @@
+import logging
 import json
-import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from users.models import CustomUser
 from .models import ChatMessage, UserStatus, Notification
 from .serializers import ChatMessageSerializer, NotificationSerializer
+
+logger = logging.getLogger(__name__)
 
 class SocialConsumer(AsyncWebsocketConsumer):
     """WebSocket consumer for social features"""
@@ -34,7 +36,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
         # Send initial data
         await self.send_initial_data()
         
-        print(f"User {self.user.username} connected and set to online")
+        logger.info('User %s connected', self.user.username)
 
     async def disconnect(self, close_code):
         # Only proceed if user is authenticated
@@ -52,7 +54,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard('global_chat', self.channel_name)
         
         username = getattr(self.user, 'username', 'Anonymous') if not self.user.is_anonymous else 'Anonymous'
-        print(f"User {username} disconnected and set to offline")
+        logger.info('User %s disconnected', username)
     
     async def receive(self, text_data):
         try:
@@ -67,7 +69,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
                 await self.handle_mark_read(data)
                 
         except Exception as e:
-            print(f"Error in receive: {e}")
+            logger.exception("Error in receive")
     
     async def handle_send_message(self, data):
         """Handle sending a message"""
@@ -75,7 +77,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
         message_type = data.get('message_type', 'private')
         receiver_id = data.get('receiver_id')
 
-        print(f"Handling send message: {content}, type: {message_type}, receiver: {receiver_id}")
+        logger.debug('Chat message type=%s receiver=%s', message_type, receiver_id)
 
         if not content:
             return
@@ -125,10 +127,10 @@ class SocialConsumer(AsyncWebsocketConsumer):
                         }
                     )
 
-            print(f"Message sent successfully: {message}")
+            logger.debug('Chat message delivered')
 
         except Exception as e:
-            print(f"Error handling send message: {e}")
+            logger.exception("Error handling send message")
             await self.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'Failed to send message'
@@ -207,7 +209,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             serializer = ChatMessageSerializer(message)
             return serializer.data
         except Exception as e:
-            print(f"Error creating message: {e}")
+            logger.exception("Error creating message")
             return None
     
     @database_sync_to_async
@@ -229,7 +231,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             serializer = NotificationSerializer(notification)
             return serializer.data
         except Exception as e:
-            print(f"Error creating notification: {e}")
+            logger.exception("Error creating notification")
             return None
     
     @database_sync_to_async
@@ -248,7 +250,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             user_status.save()
             return True
         except Exception as e:
-            print(f"Error updating status: {e}")
+            logger.exception("Error updating status")
             return False
     
     @database_sync_to_async
@@ -273,7 +275,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             
             return friends
         except Exception as e:
-            print(f"Error getting friends: {e}")
+            logger.exception("Error getting friends")
             return []
     
     @database_sync_to_async
@@ -292,7 +294,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
                 ).update(is_read=True)
             return True
         except Exception as e:
-            print(f"Error marking notifications read: {e}")
+            logger.exception("Error marking notifications read")
             return False
     
     async def broadcast_status_update(self):
@@ -337,7 +339,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
                 'user_id': self.user.id
             }))
         except Exception as e:
-            print(f"Error sending initial data: {e}")
+            logger.exception("Error sending initial data")
     
     @database_sync_to_async
     def get_friends_with_status(self):
@@ -360,5 +362,5 @@ class SocialConsumer(AsyncWebsocketConsumer):
             serializer = UserSerializer(friends, many=True, context={'request': None})
             return serializer.data
         except Exception as e:
-            print(f"Error getting friends with status: {e}")
+            logger.exception("Error getting friends with status")
             return []
