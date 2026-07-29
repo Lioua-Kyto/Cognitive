@@ -10,7 +10,7 @@ from .models import CustomUser, Achievement, UserAchievement, Badge, UserBadge
 from leaderboard.models import BestScore, GameResult
 from games.models import Game
 from .serializers import *
-from .utils import get_achievement_progress, check_and_award_achievements
+from .services.achievements import get_achievement_progress, check_and_award_achievements
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_countries import countries
 
@@ -69,6 +69,9 @@ class UserUpdateProfileView(generics.UpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
+        # Respond with the full detail shape so the client gets an absolute
+        # profile_picture URL back.
+        return Response(UserDetailSerializer(instance, context={'request': request}).data)
 
 
 @api_view(['GET'])
@@ -120,7 +123,7 @@ def get_user_stats(request, user_id):
         print(f"=== Backend: User stats - games: {total_games}, xp: {total_xp}, level: {level}, rank: {global_rank}")
         
         # Category-specific stats
-        categories = ['memory', 'attention', 'speed', 'logic', 'language', 'multi', 'competitive']
+        categories = [key for key, _ in Game.CATEGORY_CHOICES]
         category_stats = {}
         
         for category in categories:
@@ -437,7 +440,7 @@ def get_user_category_ranks(request, user_id):
     """Get user's ranking in each category"""
     try:
         user = get_object_or_404(CustomUser, id=user_id)
-        categories = ['memory', 'attention', 'speed', 'logic', 'language', 'multi', 'competitive']
+        categories = [key for key, _ in Game.CATEGORY_CHOICES]
         
         category_ranks = {}
         for category in categories:
@@ -450,10 +453,6 @@ def get_user_category_ranks(request, user_id):
         return Response(category_ranks)
     except CustomUser.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        # Return user with full detail including profile picture URL
-        user_serializer = UserDetailSerializer(instance, context={'request': request})
-        return Response(user_serializer.data)
 
 class CountryListView(APIView):
     """Returns the list of available countries from django_countries"""

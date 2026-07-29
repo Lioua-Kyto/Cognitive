@@ -100,9 +100,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """Add experience points and return if level increased"""
         old_level = self.level
         self.experience += xp_amount
-        self.save()
-        new_level = self.level
-        return new_level > old_level
+        self.save(update_fields=['experience'])
+        return self.level > old_level
 
     @property
     def total_games_played(self):

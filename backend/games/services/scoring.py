@@ -6,7 +6,7 @@ from django.db import transaction
 
 from games.models import Game
 from leaderboard.models import BestScore, GameResult
-from users.utils import check_and_award_achievements
+from users.services.achievements import check_and_award_achievements
 
 logger = logging.getLogger(__name__)
 
