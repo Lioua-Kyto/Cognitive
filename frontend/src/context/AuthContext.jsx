@@ -75,11 +75,11 @@ export function AuthProvider({ children }) {
     getUser();
   }, [token]);
 
-  // Setup automatic token refresh on mount
+  // Setup automatic token refresh on mount. The cleanup matters: without it
+  // every token change left another self-re-arming timer chain running.
   useEffect(() => {
-    if (token && !isTokenExpired(token)) {
-      setupTokenRefresh();
-    }
+    if (!token || isTokenExpired(token)) return;
+    return setupTokenRefresh();
   }, [token]);
 
   const login = async (jwt, refreshTokenValue) => {
@@ -94,9 +94,7 @@ export function AuthProvider({ children }) {
       const userData = await fetchProfile(jwt);
       setUser(userData);
       localStorage.setItem("userData", JSON.stringify(userData));
-
-      // Setup automatic token refresh
-      setupTokenRefresh();
+      // The effect above re-arms the refresh timer when `token` changes.
     } catch (error) {
       console.error("Login failed:", error);
       logout();

@@ -1,3 +1,4 @@
+import { API_BASE } from "../api/config.js";
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import "./AchievementTooltip.css";
@@ -26,7 +27,7 @@ const AchievementTooltip = ({ children, achievement, badge, isVisible }) => {
       let response;
       if (achievement) {
         response = await fetch(
-          `http://127.0.0.1:8000/api/users/achievements/${achievement.id}/stats/`,
+          `${API_BASE}/users/achievements/${achievement.id}/stats/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -36,7 +37,7 @@ const AchievementTooltip = ({ children, achievement, badge, isVisible }) => {
         );
       } else if (badge) {
         response = await fetch(
-          `http://127.0.0.1:8000/api/users/badges/${badge.id}/stats/`,
+          `${API_BASE}/users/badges/${badge.id}/stats/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

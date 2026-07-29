@@ -1,4 +1,5 @@
-const BASE_URL = "http://127.0.0.1:8000/api";
+import { API_BASE } from "./config.js";
+const BASE_URL = API_BASE;
 
 export async function fetchCategories(token) {
   const res = await fetch(`${BASE_URL}/games/categories/`, {

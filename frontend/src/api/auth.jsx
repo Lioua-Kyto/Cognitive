@@ -1,4 +1,5 @@
-const BASE_URL = "http://127.0.0.1:8000/api/users/";
+import { API_BASE } from "./config.js";
+const BASE_URL = `${API_BASE}/users/`;
 
 export async function login(email, password) {
   const res = await fetch(`${BASE_URL}login/`, {
@@ -10,7 +11,7 @@ export async function login(email, password) {
 }
 
 export async function refreshAccessToken(refresh) {
-  const res = await fetch("http://127.0.0.1:8000/api/token/refresh/", {
+  const res = await fetch(`${API_BASE}/token/refresh/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh }),
@@ -37,7 +38,7 @@ export async function register(data) {
 }
 
 export async function fetchProfile(token) {
-  const res = await fetch("http://127.0.0.1:8000/api/users/profile/", {
+  const res = await fetch(`${API_BASE}/users/profile/`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();

@@ -1,3 +1,4 @@
+import { API_ORIGIN } from "../api/config.js";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSocial } from "../context/SocialContext";
@@ -11,7 +12,7 @@ const ensureAbsoluteUrl = (url) => {
   if (url.startsWith("http")) return url;
 
   // Use your backend base URL
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = API_ORIGIN;
   return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 

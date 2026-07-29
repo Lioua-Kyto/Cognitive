@@ -128,16 +128,21 @@ export default function GameLayout({
         xpToNextLevel,
         levelProgress,
         handleGameOver,
+        handleGameComplete,
         resetProgress,
         isVictory,
         handleSuccess,
         handleWrong,
         streak,
+        maxStreak,
+        lastCorrectTime,
+        mistakes,
+        setMistakes,
+        correctAnswers,
         result,
         setResult,
         timer: gameTimer,
         setTimer: setGameTimer,
-        ...soundApi
       }) => {
         // Timer logic must be here!
         useEffect(() => {
@@ -344,15 +349,20 @@ export default function GameLayout({
                       xpToNextLevel,
                       levelProgress,
                       handleGameOver,
+                      handleGameComplete,
                       resetProgress,
                       handleWrong,
                       isVictory,
                       handleSuccess,
+                      streak,
+                      maxStreak,
+                      lastCorrectTime,
+                      correctAnswers,
                       result,
                       timer,
                       setTimer,
-                      mistakes: 0, // Add default mistakes
-                      setMistakes: () => {}, // Add default setMistakes
+                      mistakes,
+                      setMistakes,
                       ...soundApiLocal,
                     })
                   )}

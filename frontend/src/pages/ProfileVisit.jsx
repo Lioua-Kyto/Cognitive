@@ -1,3 +1,4 @@
+import { API_BASE, API_ORIGIN } from "../api/config.js";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
@@ -14,7 +15,7 @@ const ensureAbsoluteUrl = (url) => {
   if (url.startsWith("http")) return url;
 
   // Use your backend base URL
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = API_ORIGIN;
   return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
@@ -137,30 +138,6 @@ export default function ProfileVisit() {
     }
   };
 
-  // Helper function to fetch game stats
-  const fetchGameStats = async (userId) => {
-    try {
-      const statsResponse = await fetch(
-        `http://127.0.0.1:8000/api/leaderboard/user-stats/${userId}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        console.log("Stats data received:", statsData);
-        setGameStats(statsData);
-      } else {
-        console.log("Stats endpoint returned:", statsResponse.status);
-      }
-    } catch (error) {
-      console.log("Failed to fetch stats:", error);
-    }
-  };
 
   const handleSendFriendRequest = async () => {
     if (profileData) {

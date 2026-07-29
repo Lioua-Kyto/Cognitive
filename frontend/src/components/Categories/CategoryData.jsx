@@ -1,3 +1,14 @@
+// Icons are imported so Vite fingerprints them into the build. The previous
+// "/src/components/..." literals only resolved under `vite dev` and 404'd in
+// production.
+import memoryIcon from "./Icons/Memory.png";
+import attentionIcon from "./Icons/Attention.png";
+import speedIcon from "./Icons/Speed.png";
+import logicIcon from "./Icons/Logic.png";
+import languageIcon from "./Icons/Language.png";
+import multiIcon from "./Icons/Multi.png";
+import competitiveIcon from "./Icons/Competetive.png";
+
 // Game data organized by category
 export const gamesByCategory = {
   memory: [
@@ -209,49 +220,49 @@ export const categoryDescriptions = {
 // Category metadata for enhanced UI
 export const categoryEnhancements = {
   memory: {
-    icon: "/src/components/Categories/Icons/Memory.png",
+    icon: memoryIcon,
     desc: "Train your memory and recall abilities",
     science: "Strengthen neural pathways for better retention",
     color: "var(--memory-main, #5b9bd5)",
     lightColor: "var(--memory-light, rgba(91, 155, 213, 0.2))",
   },
   attention: {
-    icon: "/src/components/Categories/Icons/Attention.png",
+    icon: attentionIcon,
     desc: "Improve focus and selective attention",
     science: "Enhance attention networks in the brain",
     color: "var(--attention-main, #ed7d31)",
     lightColor: "var(--attention-light, rgba(237, 125, 49, 0.2))",
   },
   speed: {
-    icon: "/src/components/Categories/Icons/Speed.png",
+    icon: speedIcon,
     desc: "Boost reaction time and processing speed",
     science: "Optimize cognitive processing efficiency",
     color: "var(--speed-main, #70ad47)",
     lightColor: "var(--speed-light, rgba(112, 173, 71, 0.2))",
   },
   logic: {
-    icon: "/src/components/Categories/Icons/Logic.png",
+    icon: logicIcon,
     desc: "Develop reasoning and problem-solving",
     science: "Strengthen executive function networks",
     color: "var(--logic-main, #7030a0)",
     lightColor: "var(--logic-light, rgba(112, 48, 160, 0.2))",
   },
   language: {
-    icon: "/src/components/Categories/Icons/Language.png",
+    icon: languageIcon,
     desc: "Enhance verbal and linguistic abilities",
     science: "Activate language processing centers",
     color: "var(--language-main, #ffc000)",
     lightColor: "var(--language-light, rgba(255, 192, 0, 0.2))",
   },
   multi: {
-    icon: "/src/components/Categories/Icons/Multi.png",
+    icon: multiIcon,
     desc: "Master multitasking and cognitive flexibility",
     science: "Integrate multiple brain networks",
     color: "var(--multi-main, #4472c4)",
     lightColor: "var(--multi-light, rgba(68, 114, 196, 0.2))",
   },
   competitive: {
-    icon: "/src/components/Categories/Icons/Competetive.png",
+    icon: competitiveIcon,
     desc: "Challenge yourself with multiplayer competitions",
     science: "Push cognitive limits against real opponents",
     color: "var(--competitive-main, #ff6666)",

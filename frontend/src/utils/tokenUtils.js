@@ -1,148 +1,119 @@
-// Token refresh utility
-const API_BASE_URL = "http://localhost:8000/api";
+import { API_BASE } from "../api/config.js";
 
-export const refreshToken = async () => {
+// Refresh 5 minutes before the access token expires.
+const REFRESH_LEAD_MS = 5 * 60 * 1000;
+
+function clearSession() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("userData");
+}
+
+export const decodeToken = (token) => {
+  if (!token) return null;
   try {
-    const refreshToken = localStorage.getItem("refreshToken");
-
-    if (!refreshToken) {
-      throw new Error("No refresh token found");
-    }
-
-    const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        refresh: refreshToken,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Token refresh failed");
-    }
-
-    const data = await response.json();
-
-    // Update tokens in localStorage
-    localStorage.setItem("token", data.access);
-    if (data.refresh) {
-      localStorage.setItem("refreshToken", data.refresh);
-    }
-
-    return data.access;
-  } catch (error) {
-    console.error("Error refreshing token:", error);
-
-    // Clear tokens and redirect to login
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("userData");
-
-    // Redirect to login page
-    window.location.href = "/login";
-
-    throw error;
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
   }
 };
 
-// Setup automatic token refresh
-export const setupTokenRefresh = () => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    return;
+export const refreshToken = async () => {
+  const stored = localStorage.getItem("refreshToken");
+  if (!stored) {
+    clearSession();
+    throw new Error("No refresh token found");
   }
 
-  try {
-    // Parse JWT token to get expiration
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const exp = payload.exp * 1000; // Convert to milliseconds
-    const now = Date.now();
+  const response = await fetch(`${API_BASE}/token/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh: stored }),
+  });
 
-    // Refresh 5 minutes before expiration
-    const refreshTime = exp - now - 5 * 60 * 1000;
+  if (!response.ok) {
+    // There is no /login route — the app renders the login form whenever
+    // AuthContext has no token, so clearing storage and reloading is what
+    // actually returns the user to the login screen.
+    clearSession();
+    window.location.assign("/");
+    throw new Error("Token refresh failed");
+  }
 
-    if (refreshTime > 0) {
-      setTimeout(async () => {
+  const data = await response.json();
+  localStorage.setItem("token", data.access);
+  if (data.refresh) {
+    localStorage.setItem("refreshToken", data.refresh);
+  }
+  return data.access;
+};
+
+/**
+ * Schedule automatic refresh. Returns a cancel function.
+ *
+ * The previous version re-armed itself with a bare setTimeout whose id was never
+ * kept, and its caller had no cleanup — so every token change stacked another
+ * refresh chain that ran forever.
+ */
+export const setupTokenRefresh = () => {
+  let timerId = null;
+  let cancelled = false;
+
+  const schedule = () => {
+    if (cancelled) return;
+
+    const payload = decodeToken(localStorage.getItem("token"));
+    if (!payload?.exp) return;
+
+    const delay = payload.exp * 1000 - Date.now() - REFRESH_LEAD_MS;
+    timerId = setTimeout(
+      async () => {
         try {
           await refreshToken();
-          // Setup next refresh
-          setupTokenRefresh();
+          schedule();
         } catch (error) {
           console.error("Auto token refresh failed:", error);
         }
-      }, refreshTime);
-    } else {
-      // Token already expired or expiring soon, refresh immediately
-      refreshToken()
-        .then(() => {
-          setupTokenRefresh();
-        })
-        .catch((error) => {
-          console.error("Immediate token refresh failed:", error);
-        });
-    }
-  } catch (error) {
-    console.error("Error parsing token:", error);
-  }
+      },
+      Math.max(delay, 0)
+    );
+  };
+
+  schedule();
+
+  return () => {
+    cancelled = true;
+    if (timerId) clearTimeout(timerId);
+  };
 };
 
-// Check if token is expired
 export const isTokenExpired = (token) => {
-  if (!token) return true;
-
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const exp = payload.exp * 1000;
-    return Date.now() >= exp;
-  } catch {
-    return true;
-  }
+  const payload = decodeToken(token);
+  return !payload?.exp || Date.now() >= payload.exp * 1000;
 };
 
 // Make authenticated API calls with automatic token refresh
 export const apiCallWithRefresh = async (url, options = {}) => {
   let token = localStorage.getItem("token");
 
-  // Check if token is expired
   if (isTokenExpired(token)) {
-    try {
-      token = await refreshToken();
-    } catch (error) {
-      throw error;
-    }
+    token = await refreshToken();
   }
 
-  const defaultOptions = {
+  const buildOptions = (accessToken) => ({
+    ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...options.headers,
+      Authorization: `Bearer ${accessToken}`,
     },
-    ...options,
-  };
+  });
 
-  const response = await fetch(url, defaultOptions);
+  const response = await fetch(url, buildOptions(token));
 
-  // If we get a 401, try to refresh token once
   if (response.status === 401) {
-    try {
-      token = await refreshToken();
-
-      // Retry the request with new token
-      const retryOptions = {
-        ...defaultOptions,
-        headers: {
-          ...defaultOptions.headers,
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
-      return await fetch(url, retryOptions);
-    } catch (error) {
-      throw error;
-    }
+    token = await refreshToken();
+    return fetch(url, buildOptions(token));
   }
 
   return response;

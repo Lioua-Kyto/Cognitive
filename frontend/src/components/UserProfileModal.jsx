@@ -1,3 +1,4 @@
+import { API_ORIGIN } from "../api/config.js";
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from "../context/NotificationContext";
@@ -12,7 +13,7 @@ const ensureAbsoluteUrl = (url) => {
   if (url.startsWith("http")) return url;
 
   // Use your backend base URL
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = API_ORIGIN;
   return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 };
 
@@ -267,7 +268,7 @@ const UserProfileModal = ({ isOpen, onClose, user, isCurrentUser = false }) => {
                         countryCodeMap[countryName] || countryName.slice(0, 2);
 
                       // Use your backend static flags first, same as Profile.jsx
-                      return `http://127.0.0.1:8000/static/flags/${countryCode}.svg`;
+                      return `${API_ORIGIN}/static/flags/${countryCode}.svg`;
                     })()}
                     alt=""
                     className="country-flag"
@@ -281,7 +282,7 @@ const UserProfileModal = ({ isOpen, onClose, user, isCurrentUser = false }) => {
                         userProfile.country_name.toLowerCase();
                       if (countryName === "algeria") {
                         e.target.src =
-                          "http://127.0.0.1:8000/static/flags/dz.svg";
+                          `${API_ORIGIN}/static/flags/dz.svg`;
                         e.target.onerror = () => {
                           e.target.style.display = "none";
                         };

@@ -1,3 +1,4 @@
+import { API_BASE, WS_BASE } from "../api/config.js";
 import React, {
   createContext,
   useContext,
@@ -41,7 +42,7 @@ export const SocialProvider = ({ children, token, userId }) => {
   const { showNotification } = useNotifications();
 
   // API base URL
-  const API_BASE_URL = "http://localhost:8000/api";
+  const API_BASE_URL = API_BASE;
 
   // Helper function to make API calls with auto token refresh
   const apiCall = async (endpoint, options = {}) => {
@@ -84,7 +85,7 @@ export const SocialProvider = ({ children, token, userId }) => {
         return;
       }
 
-      const wsUrl = `ws://localhost:8000/ws/social/?token=${token}`;
+      const wsUrl = `${WS_BASE}/ws/social/?token=${token}`;
 
       console.log("Attempting to connect to WebSocket:", wsUrl);
       console.log(

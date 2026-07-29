@@ -1,6 +1,7 @@
+import { API_BASE } from "./config.js";
 import { categoryEnhancements } from "../components/Categories/CategoryData.jsx";
 
-const BASE_URL = "http://127.0.0.1:8000/api/games/";
+const BASE_URL = `${API_BASE}/games/`;
 
 // MEMORY GAMES
 export async function submitNumberRecall(data, token) {
@@ -195,42 +196,6 @@ export async function submitCategoryStorm(data, token) {
   return res.json();
 }
 
-export async function submitTapTapGo(data, token) {
-  const res = await fetch(`${BASE_URL}tap-tap-go/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function submitQuickMath(data, token) {
-  const res = await fetch(`${BASE_URL}quick-math/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function submitColorMatch(data, token) {
-  const res = await fetch(`${BASE_URL}color-match/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
 export async function submitReactionTime(data, token) {
   const res = await fetch(`${BASE_URL}reaction-time/`, {
     method: "POST",
@@ -270,30 +235,6 @@ export async function submitMathLogic(data, token) {
 
 export async function submitTilePuzzle(data, token) {
   const res = await fetch(`${BASE_URL}tile-puzzle/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function submitNumberSequence(data, token) {
-  const res = await fetch(`${BASE_URL}number-sequence/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function submitPatternRecognition(data, token) {
-  const res = await fetch(`${BASE_URL}pattern-recognition/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -450,31 +391,6 @@ export async function submitRapidDecision(data, token) {
   return res.json();
 }
 
-export async function submitCognitiveFlexibility(data, token) {
-  const res = await fetch(`${BASE_URL}cognitive-flexibility/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-export async function submitWorkingMemoryUpdate(data, token) {
-  const res = await fetch(`${BASE_URL}working-memory-update/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-// COMPETITIVE GAMES
 export async function submitMovingTarget(data, token) {
   const res = await fetch(`${BASE_URL}moving-target/`, {
     method: "POST",
@@ -657,17 +573,12 @@ export default {
   submitSpeedSort,
   submitReactionTimeTap,
   submitCategoryStorm,
-  submitTapTapGo,
-  submitQuickMath,
-  submitColorMatch,
   submitReactionTime,
 
   // Logic games
   submitShapeSequences,
   submitMathLogic,
   submitTilePuzzle,
-  submitNumberSequence,
-  submitPatternRecognition,
   submitSymbolEquation,
   submitPathBuilder,
 
@@ -684,8 +595,6 @@ export default {
   submitResourceManagement,
   submitColorWordSwitch,
   submitRapidDecision,
-  submitCognitiveFlexibility,
-  submitWorkingMemoryUpdate,
 
   // Competitive games
   submitMovingTarget,
