@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../queries/keys.js";
 import {
   GlobalLeaderboard,
   CategoryLeaderboard,
   GameLeaderboard,
   UserGameProgress,
 } from "../api/leaderboard.jsx";
-import useCategories from "../hooks/useCategories.jsx";
+import useCategories from "../queries/useCategories.js";
 import {
   enhanceCategories,
   gamesByCategory,
@@ -109,68 +111,63 @@ function LeaderboardTable({ players, highlightUserId, expanded, onExpand }) {
 }
 
 export default function Leaderboard({ user, token }) {
-  const { categories, loading: categoriesLoading } = useCategories(token);
+  const { categories, loading: categoriesLoading } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState("memory");
   const [selectedGame, setSelectedGame] = useState("all");
-  const [players, setPlayers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userStats, setUserStats] = useState(null);
   const [globalRanks, setGlobalRanks] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const getGameLabel = (cat, key) =>
     gamesByCategory[cat]?.find((g) => g.key === key)?.label || key;
 
-  useEffect(() => {
-    setLoading(true);
-    setExpanded(false);
+  // Which board is on screen, derived rather than tracked in state.
+  const scope = globalRanks
+    ? { kind: "global" }
+    : selectedGame !== "all"
+      ? { kind: "game", name: getGameLabel(selectedCategory, selectedGame) }
+      : { kind: "category", name: selectedCategory };
 
-    async function fetchData() {
-      try {
-        let data = [];
-        if (globalRanks) {
-          data = await GlobalLeaderboard.fetch();
-          setPlayers(data || []);
-          if (user && token) {
-            const stats = await UserGameProgress.fetch("global", token);
-            setUserStats(stats);
-          }
-        } else if (selectedCategory) {
-          if (selectedGame && selectedGame !== "all") {
-            const gameLabel = getGameLabel(selectedCategory, selectedGame);
-            data = await GameLeaderboard.fetch(gameLabel);
-          } else {
-            data = await CategoryLeaderboard.fetch(selectedCategory);
-          }
-          setPlayers(data || []);
-          if (user && token) {
-            const gameName =
-              selectedGame !== "all"
-                ? getGameLabel(selectedCategory, selectedGame)
-                : selectedCategory;
-            const stats = await UserGameProgress.fetch(gameName, token);
-            setUserStats(stats);
-          }
-        }
-      } catch (e) {
-        console.error("Error fetching leaderboard data:", e);
-        setPlayers([]);
-      } finally {
-        setLoading(false);
-      }
-    }
+  const boardQuery = useQuery({
+    queryKey:
+      scope.kind === "global"
+        ? queryKeys.leaderboard.global()
+        : scope.kind === "game"
+          ? queryKeys.leaderboard.game(scope.name)
+          : queryKeys.leaderboard.category(scope.name),
+    queryFn: () => {
+      if (scope.kind === "global") return GlobalLeaderboard.fetch(token);
+      if (scope.kind === "game") return GameLeaderboard.fetch(scope.name, token);
+      return CategoryLeaderboard.fetch(scope.name, token);
+    },
+    enabled: Boolean(token),
+  });
 
-    fetchData();
-  }, [selectedCategory, selectedGame, globalRanks, user, token]);
+  const statsQuery = useQuery({
+    queryKey: queryKeys.gameProgress(
+      scope.kind === "global" ? "global" : scope.name
+    ),
+    queryFn: () =>
+      UserGameProgress.fetch(
+        scope.kind === "global" ? "global" : scope.name,
+        token
+      ),
+    enabled: Boolean(token && user),
+  });
+
+  const players = boardQuery.data ?? [];
+  const loading = boardQuery.isPending;
+  const userStats = statsQuery.data ?? null;
 
   const handleCategoryClick = (catKey) => {
     setSelectedCategory(catKey);
     setSelectedGame("all");
     setGlobalRanks(false);
+    setExpanded(false);
   };
 
   const handleGameChange = (e) => {
     setSelectedGame(e.target.value);
+    setExpanded(false);
   };
 
   return (
@@ -189,6 +186,7 @@ export default function Leaderboard({ user, token }) {
             setGlobalRanks(true);
             setSelectedCategory(null);
             setSelectedGame("all");
+            setExpanded(false);
           }}
         >
           🌍 Global Ranks

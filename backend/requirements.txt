@@ -1,19 +1,19 @@
-Django==5.2.3
-asgiref==3.8.1
+Django==5.2.16
+asgiref==3.12.1
 sqlparse==0.5.3
 pytz==2025.2
 
-djangorestframework==3.16.0
-djangorestframework-simplejwt==5.5.0
+djangorestframework==3.17.1
+djangorestframework-simplejwt==5.5.1
 PyJWT==2.9.0
-django-cors-headers==4.7.0
-django-countries==7.6.1
+django-cors-headers==4.9.0
+django-countries==9.0.0
 
 psycopg2-binary==2.9.10
 python-dotenv==1.1.0
 
-channels==3.0.5
-channels-redis==3.4.1
-daphne==3.0.2
+channels==4.3.2
+channels-redis==4.3.0
+daphne==4.2.3
 redis==5.2.1
 hiredis==3.2.1

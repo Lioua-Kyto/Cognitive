@@ -1,5 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { useContext, useState, lazy, Suspense } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createQueryClient } from "./queries/client.js";
 import { AuthProvider, AuthContext } from "./context/AuthContext.jsx";
 import { LevelUpProvider } from "./context/LevelUpContext.jsx";
 import { SocialProvider } from "./context/SocialContext.jsx";
@@ -108,16 +110,20 @@ function SocialBridge({ children }) {
   );
 }
 
+const queryClient = createQueryClient();
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <SocialBridge>
-          <LevelUpProvider>
-            <MainApp />
-          </LevelUpProvider>
-        </SocialBridge>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SocialBridge>
+            <LevelUpProvider>
+              <MainApp />
+            </LevelUpProvider>
+          </SocialBridge>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 }

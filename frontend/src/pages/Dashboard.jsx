@@ -1,5 +1,6 @@
-import { useState, useEffect, useContext } from "react";
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+import { useQueries } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import {
   fetchProfile,
@@ -8,76 +9,62 @@ import {
   fetchRecentGames,
 } from "../api/profile.jsx";
 import { AchievementsAPI } from "../api/achievements.jsx";
+import { queryKeys } from "../queries/keys.js";
 import PlayStreak from "../components/Dashboard/PlayStreak";
 import "./Styles/Dashboard.css";
 
+const mostRecentlyEarned = (items, count) =>
+  (items ?? [])
+    .filter((item) => item.is_earned && item.earned_date)
+    .sort((a, b) => new Date(b.earned_date) - new Date(a.earned_date))
+    .slice(0, count);
+
 export default function Dashboard() {
-  const { token } = useContext(AuthContext);
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
-  const [gameStats, setGameStats] = useState(null);
-  const [recentGames, setRecentGames] = useState([]);
-  const [globalRank, setGlobalRank] = useState(null);
-  const [recentAchievements, setRecentAchievements] = useState([]);
-  const [recentBadges, setRecentBadges] = useState([]);
-  const [error, setError] = useState("");
+  const { token, user } = useContext(AuthContext);
+  const enabled = Boolean(token);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
+  // Five independent queries rather than one effect that reset every piece of
+  // state together and re-ran whenever the token identity changed.
+  const [profileQ, rankQ, statsQ, recentQ, awardsQ] = useQueries({
+    queries: [
+      {
+        queryKey: queryKeys.user.profile("me"),
+        queryFn: () => fetchProfile(token),
+        enabled,
+      },
+      {
+        queryKey: ["user", user?.id, "globalRank"],
+        queryFn: () => fetchGlobalRank(token),
+        enabled,
+      },
+      {
+        queryKey: queryKeys.user.stats(user?.id),
+        queryFn: () => fetchGameStats(token),
+        enabled,
+      },
+      {
+        queryKey: queryKeys.user.recentGames(user?.id),
+        queryFn: () => fetchRecentGames(token),
+        enabled,
+      },
+      {
+        queryKey: queryKeys.user.achievements(user?.id),
+        queryFn: () => new AchievementsAPI().fetchAchievementsAndBadges(token),
+        enabled,
+      },
+    ],
+  });
 
-        // Fetch all dashboard data in parallel
-        const [profileData, rankData, statsData, recentData] =
-          await Promise.all([
-            fetchProfile(token),
-            fetchGlobalRank(token).catch(() => null),
-            fetchGameStats(token).catch(() => null),
-            fetchRecentGames(token).catch(() => []),
-          ]);
+  const profile = profileQ.data ?? null;
+  const globalRank = rankQ.data ?? null;
+  const gameStats = statsQ.data ?? null;
+  const recentGames = recentQ.data ?? [];
+  const recentAchievements = mostRecentlyEarned(awardsQ.data?.achievements, 3);
+  const recentBadges = mostRecentlyEarned(awardsQ.data?.badges, 3);
 
-        setProfile(profileData);
-        setGlobalRank(rankData);
-        setGameStats(statsData);
-        setRecentGames(recentData);
-
-        // Fetch achievements and badges
-        try {
-          const achievementsAPI = new AchievementsAPI();
-          const achievementsData =
-            await achievementsAPI.fetchAchievementsAndBadges(token);
-
-          // Get recent earned achievements (last 5)
-          const earnedAchievements = achievementsData.achievements
-            .filter((a) => a.is_earned && a.earned_date)
-            .sort((a, b) => new Date(b.earned_date) - new Date(a.earned_date))
-            .slice(0, 3);
-
-          // Get recent earned badges (last 3)
-          const earnedBadges = achievementsData.badges
-            .filter((b) => b.is_earned && b.earned_date)
-            .sort((a, b) => new Date(b.earned_date) - new Date(a.earned_date))
-            .slice(0, 3);
-
-          setRecentAchievements(earnedAchievements);
-          setRecentBadges(earnedBadges);
-        } catch (achievementError) {
-          console.error("Achievement fetch error:", achievementError);
-        }
-
-        setError("");
-      } catch (error) {
-        console.error("Dashboard fetch error:", error);
-        setError("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchDashboardData();
-    }
-  }, [token]);
+  // Only the profile is load-bearing; the rest degrade to empty sections.
+  const loading = profileQ.isPending && enabled;
+  const error = profileQ.error ? "Failed to load dashboard data" : "";
 
   if (loading) {
     return (
@@ -96,7 +83,7 @@ export default function Dashboard() {
         <div className="error-state">
           <h3>Unable to load dashboard</h3>
           <p>{error}</p>
-          <button onClick={() => window.location.reload()}>Try Again</button>
+          <button onClick={() => profileQ.refetch()}>Try Again</button>
         </div>
       </div>
     );

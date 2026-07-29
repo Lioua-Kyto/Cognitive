@@ -1,67 +1,41 @@
 import { API_BASE } from "../api/config.js";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useContext } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
+import { queryKeys } from "../queries/keys.js";
 import "./AchievementTooltip.css";
+
+async function fetchStats(kind, id, token) {
+  const res = await fetch(`${API_BASE}/users/${kind}/${id}/stats/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch stats: ${res.status}`);
+  return res.json();
+}
 
 const AchievementTooltip = ({ children, achievement, badge, isVisible }) => {
   const { token } = useContext(AuthContext);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (isVisible && (achievement || badge) && token) {
-      fetchStats();
-    }
-  }, [isVisible, achievement, badge, token]);
+  // Fetches once per achievement and is served from cache on every subsequent
+  // hover; the effect version refetched on each one.
+  const query = useQuery({
+    queryKey: achievement
+      ? queryKeys.achievementStats(achievement.id)
+      : queryKeys.badgeStats(badge?.id),
+    queryFn: () =>
+      achievement
+        ? fetchStats("achievements", achievement.id, token)
+        : fetchStats("badges", badge.id, token),
+    enabled: Boolean(isVisible && token && (achievement || badge)),
+    staleTime: 5 * 60_000,
+  });
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
-      let response;
-      if (achievement) {
-        response = await fetch(
-          `${API_BASE}/users/achievements/${achievement.id}/stats/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      } else if (badge) {
-        response = await fetch(
-          `${API_BASE}/users/badges/${badge.id}/stats/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error("API Error:", response.status, errorData);
-        throw new Error(`Failed to fetch stats: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setStats(data);
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const stats = query.data ?? null;
+  const loading = query.isFetching;
+  const error = query.error?.message ?? null;
 
   const getRarityColor = (rarity) => {
     switch (rarity) {

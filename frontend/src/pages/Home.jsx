@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import useCategories from "../hooks/useCategories.jsx";
+import useCategories from "../queries/useCategories.js";
 import { enhanceCategories } from "../components/Categories/CategoryData.jsx";
 import "./Styles/Home.css";
 
@@ -85,7 +85,7 @@ const whoCards = [
 
 export default function Home() {
   const { token } = useContext(AuthContext);
-  const { categories, loading: categoriesLoading } = useCategories(token);
+  const { categories, loading: categoriesLoading } = useCategories();
 
   // Science Slideshow State
   const [slide, setSlide] = useState(0);

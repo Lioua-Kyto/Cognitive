@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLevelUp } from "../../../context/LevelUpContext";
 import { useUserRefresh } from "../../../hooks/useUserRefresh";
+import { useInvalidateAfterGame } from "../../../queries/useUserData.js";
 import { playCorrect, playLevelUp } from "../../../utils/soundEffects";
 
 export default function GameProgressManager({
@@ -16,6 +17,9 @@ export default function GameProgressManager({
 }) {
   const { triggerLevelUp } = useLevelUp();
   const refreshUserData = useUserRefresh();
+  // Marks stats, recent games, awards, leaderboards and per-game progress stale
+  // so screens re-read them instead of relying on a full page reload.
+  const invalidateAfterGame = useInvalidateAfterGame();
   const [level, setLevel] = useState(initialLevel);
   const [score, setScore] = useState(0);
   const [xp, setXp] = useState(0);
@@ -303,12 +307,14 @@ export default function GameProgressManager({
             // Also refresh user data for context updates
             setTimeout(async () => {
               await refreshUserData();
+            invalidateAfterGame();
             }, 100);
           }
 
           // Always refresh user data to update XP progress
           setTimeout(async () => {
             await refreshUserData();
+            invalidateAfterGame();
           }, 1000);
 
           // Update payload with XP info for the result popup
@@ -432,6 +438,7 @@ export default function GameProgressManager({
               // Refresh user data for context updates
               setTimeout(async () => {
                 await refreshUserData();
+            invalidateAfterGame();
               }, 100);
             }
 
@@ -439,6 +446,7 @@ export default function GameProgressManager({
             setTimeout(
               async () => {
                 await refreshUserData();
+            invalidateAfterGame();
               },
               response.level_up ? 500 : 200
             );

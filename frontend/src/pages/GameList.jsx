@@ -1,89 +1,48 @@
 import { Link, useParams } from "react-router-dom";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { gamesByCategory } from "../components/Categories/CategoryData.jsx";
 import { AuthContext } from "../context/AuthContext.jsx";
-import { fetchUserGameProgress } from "../api/score.jsx";
 import { fetchGameHistoryDetails } from "../api/profile.jsx";
 import "./Styles/GameList.css";
+
+const EMPTY_STATS = { plays: 0, bestLevel: 1, bestScore: 0 };
 
 export default function GameList() {
   const { category } = useParams();
   const { token } = useContext(AuthContext);
-  const [gameStats, setGameStats] = useState({});
-  const [loading, setLoading] = useState(true);
 
   // Get games from imported gamesByCategory
   const games = gamesByCategory[category] || [];
 
-  useEffect(() => {
-    async function fetchAllGameStats() {
-      if (!token || !games.length) {
-        setLoading(false);
-        return;
-      }
+  // One request for the whole category. This used to be the category history
+  // request plus a separate progress request per game, even though the category
+  // response already carries best_score, best_level and total_plays.
+  const { data, isPending } = useQuery({
+    queryKey: ["gameHistory", category],
+    queryFn: () => fetchGameHistoryDetails(token, category),
+    enabled: Boolean(token && category && games.length),
+  });
 
-      setLoading(true);
-      const stats = {};
-
-      try {
-        // First, get detailed game history for this category to get play counts
-        const gameHistoryDetails = await fetchGameHistoryDetails(
-          token,
-          category
-        );
-
-        // Then fetch individual game progress for best scores and levels
-        await Promise.all(
-          games.map(async (game) => {
-            try {
-              // Find this game in the detailed history
-              const gameDetail = gameHistoryDetails?.games?.find(
-                (g) => g.name === game.label || g.key === game.key
-              );
-
-              // Get user progress for best score and level
-              const userProgress = await fetchUserGameProgress(
-                game.label,
-                token
-              );
-
-              stats[game.key] = {
-                plays: gameDetail?.total_plays || 0,
-                bestLevel: userProgress.level_reached || 1,
-                bestScore: userProgress.score || 0,
-              };
-
-              console.log(`Stats for ${game.label}:`, stats[game.key]);
-            } catch (error) {
-              console.warn(`Failed to fetch stats for ${game.label}:`, error);
-              // Set default values if fetch fails
-              stats[game.key] = {
-                plays: 0,
-                bestLevel: 1,
-                bestScore: 0,
-              };
+  const gameStats = Object.fromEntries(
+    games.map((game) => {
+      const detail = data?.games?.find(
+        (g) => g.name === game.label || g.key === game.key
+      );
+      return [
+        game.key,
+        detail
+          ? {
+              plays: detail.total_plays || 0,
+              bestLevel: detail.best_level || 1,
+              bestScore: detail.best_score || 0,
             }
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching game stats:", error);
-        // Set default stats for all games if category fetch fails
-        games.forEach((game) => {
-          stats[game.key] = {
-            plays: 0,
-            bestLevel: 1,
-            bestScore: 0,
-          };
-        });
-      }
+          : EMPTY_STATS,
+      ];
+    })
+  );
 
-      console.log("All game stats:", stats);
-      setGameStats(stats);
-      setLoading(false);
-    }
-
-    fetchAllGameStats();
-  }, [category, token, games]);
+  const loading = isPending && Boolean(token) && games.length > 0;
 
   return (
     <div className="game-list-container">

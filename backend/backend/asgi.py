@@ -18,14 +18,19 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
 from social.routing import websocket_urlpatterns
 from social.middleware import JWTAuthMiddlewareStack
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": JWTAuthMiddlewareStack(
-        URLRouter(
-            websocket_urlpatterns
+    # Origin validation compares against ALLOWED_HOSTS, so a page on another
+    # origin cannot open a socket with a stolen token.
+    "websocket": AllowedHostsOriginValidator(
+        JWTAuthMiddlewareStack(
+            URLRouter(
+                websocket_urlpatterns
+            )
         )
     ),
 })

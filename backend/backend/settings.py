@@ -53,6 +53,9 @@ ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 # Application definition
 
 INSTALLED_APPS = [
+    # Channels 4 moved the runserver ASGI integration into the daphne app, which
+    # has to precede staticfiles to take over runserver.
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

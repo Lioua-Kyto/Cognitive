@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { enhanceCategories } from "../components/Categories/CategoryData.jsx";
-import useCategories from "../hooks/useCategories.jsx";
+import useCategories from "../queries/useCategories.js";
 import "./Styles/GameCategories.css";
 
 export default function GameCategories() {
