@@ -32,7 +32,7 @@ class GameResult(models.Model):
         super().save(*args, **kwargs)
         
         if is_new:
-            # Don't add XP here - it's handled in update_score function
+            # XP is awarded by games.services.scoring.record_game_result, not here.
             self.update_best_score()
 
     def update_best_score(self):
@@ -53,29 +53,24 @@ class GameResult(models.Model):
         
         if not created:
             # Update if this is a better score
-            updated = False
             if self.score > best_score.score:
                 best_score.score = self.score
                 best_score.level_reached = self.level_reached
                 best_score.xp_earned = self.xp_earned
-                updated = True
-            
+
             if self.streaks > best_score.best_streak:
                 best_score.best_streak = self.streaks
-                updated = True
-                
+
             if self.mistakes < best_score.fewest_mistakes:
                 best_score.fewest_mistakes = self.mistakes
-                updated = True
-                
+
             if self.correct_answers > best_score.most_correct:
                 best_score.most_correct = self.correct_answers
-                updated = True
-            
+
+            # Always saved: times_played changes on every play, so gating the
+            # save on a record being broken silently dropped the increment.
             best_score.times_played += 1
-            
-            if updated:
-                best_score.save()
+            best_score.save()
 
 
 class BestScore(models.Model):
