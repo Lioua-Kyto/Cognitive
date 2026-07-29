@@ -19,6 +19,10 @@ class GameResult(models.Model):
 
     class Meta:
         ordering = ['-played_at']
+        indexes = [
+            models.Index(fields=['user', '-played_at']),
+            models.Index(fields=['game', '-played_at']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.game.name} - Score: {self.score}"

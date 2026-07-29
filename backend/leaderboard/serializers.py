@@ -65,7 +65,7 @@ class BestScoreSerializer(serializers.ModelSerializer):
             "user",
             "score",
             "level_reached",
-            "xp",
+            "xp_earned",
             "last_updated",
             "game",
             "best_streak",

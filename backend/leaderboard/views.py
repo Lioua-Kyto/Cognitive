@@ -8,93 +8,76 @@ from .serializers import GameScoreSerializer, BestScoreSerializer
 from users.models import CustomUser
 from django.db.models import Sum, Max, Avg, Count, Q
 from django.db.models.functions import TruncDate
-from .helpers import get_user_leaderboard_info
+from .helpers import get_user_leaderboard_info, get_users_leaderboard_info, leaderboard_limit
 from datetime import datetime, timedelta
+
+
+def _with_user_info(rows, request):
+    """Attach display info to aggregate rows keyed by 'user' in one extra query."""
+    rows = list(rows)
+    users = get_users_leaderboard_info([row['user'] for row in rows], request)
+    return [
+        {**users[row['user']], **{k: v for k, v in row.items() if k != 'user'}}
+        for row in rows
+    ]
+
 
 # GLOBAL leaderboard: sum all best scores for each user across all games/categories
 class GlobalLeaderboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         scores = (
             BestScore.objects.values('user')
-            .annotate(
-                score=Sum('score'),
-                level=Sum('level_reached')
-            )
-            .order_by('-score')
+            .annotate(score=Sum('score'), level=Sum('level_reached'))
+            .order_by('-score')[:leaderboard_limit(request)]
         )
-        
-        # Enhance with complete user info
-        enhanced_scores = []
-        for score_entry in scores:
-            user_info = get_user_leaderboard_info(score_entry['user'], request)
-            enhanced_scores.append({
-                **user_info,
-                'score': score_entry['score'],
-                'level': score_entry['level']
-            })
-            
-        return Response(enhanced_scores)
+        return Response(_with_user_info(scores, request))
 
 # CATEGORY leaderboard: sum all best scores for each user in a category
 class CategoryLeaderboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, category_name):
         scores = (
             BestScore.objects.filter(game__category=category_name)
             .values('user')
-            .annotate(
-                score=Sum('score'),
-                level=Sum('level_reached')
-            )
-            .order_by('-score')
+            .annotate(score=Sum('score'), level=Sum('level_reached'))
+            .order_by('-score')[:leaderboard_limit(request)]
         )
-        
-        # Enhance with complete user info
-        enhanced_scores = []
-        for score_entry in scores:
-            user_info = get_user_leaderboard_info(score_entry['user'], request)
-            enhanced_scores.append({
-                **user_info,
-                'score': score_entry['score'],
-                'level': score_entry['level']
-            })
-            
-        return Response(enhanced_scores)
+        return Response(_with_user_info(scores, request))
 
 # GAME leaderboard: best score for each user in a specific game
 class GameLeaderboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, game_name):
+        # BestScore is unique per (user, game), so one row per user already.
         scores = (
             BestScore.objects.filter(game__name=game_name)
             .values('user', 'score', 'level_reached', 'best_streak', 'fewest_mistakes')
-            .order_by('-score')
+            .order_by('-score')[:leaderboard_limit(request)]
         )
-        
-        # Enhance with complete user info
-        enhanced_scores = []
-        for score_entry in scores:
-            user_info = get_user_leaderboard_info(score_entry['user'], request)
-            enhanced_scores.append({
-                **user_info,
-                'score': score_entry['score'],
-                'level': score_entry['level_reached'],
-                'best_streak': score_entry['best_streak'],
-                'fewest_mistakes': score_entry['fewest_mistakes']
-            })
-            
-        return Response(enhanced_scores)
+        rows = [{**row, 'level': row.pop('level_reached')} for row in scores]
+        return Response(_with_user_info(rows, request))
 
 # List all scores (not leaderboard, just raw list)
 class GameScoreListView(generics.ListAPIView):
-    queryset = GameScore.objects.all().order_by('-score')
-    serializer_class = GameScoreSerializer
-
-# List all scores for a specific game (raw list)
-class GameScoreByGameView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = GameScoreSerializer
 
     def get_queryset(self):
-        game_id = self.kwargs['game_id']
-        return GameScore.objects.filter(game_id=game_id).order_by('-score')
+        return GameScore.objects.all().order_by('-score')[:leaderboard_limit(self.request)]
+
+# List all scores for a specific game (raw list)
+class GameScoreByGameView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = GameScoreSerializer
+
+    def get_queryset(self):
+        return GameScore.objects.filter(
+            game_id=self.kwargs['game_id']
+        ).order_by('-score')[:leaderboard_limit(self.request)]
 
 # User's progress in a specific game
 class UserGameProgressView(APIView):
@@ -219,7 +202,7 @@ class UserGamesByCategory(APIView):
         recent_games = GameResult.objects.filter(
             user=request.user,
             game__category=category_name
-        ).order_by('-played_at')[:5]
+        ).select_related('game').order_by('-played_at')[:5]
         
         results = []
         for game_result in recent_games:
@@ -252,65 +235,60 @@ class UserProgressHistory(APIView):
 class UserDetailedGameHistory(APIView):
     permission_classes = [IsAuthenticated]
     
+    # Most recent plays returned per game. This used to be every play ever.
+    HISTORY_PER_GAME = 50
+
     def get(self, request, category_name):
         user = request.user
-        
-        # Get all games in this category
-        games = Game.objects.filter(category=category_name)
-        
-        result = {
-            'category': category_name,
-            'games': []
+        games = list(Game.objects.filter(category=category_name))
+
+        # Three queries for the whole category instead of two per game.
+        bests = {
+            best.game_id: best
+            for best in BestScore.objects.filter(user=user, game__in=games)
         }
-        
-        for game in games:
-            # Get the best score from BestScore model
-            try:
-                best_score_obj = BestScore.objects.get(user=user, game=game)
-                best_score = best_score_obj.score
-                best_level = best_score_obj.level_reached
-                best_streak = best_score_obj.best_streak
-                fewest_mistakes = best_score_obj.fewest_mistakes
-                most_correct = best_score_obj.most_correct
-            except BestScore.DoesNotExist:
-                best_score = 0
-                best_level = 1
-                best_streak = 0
-                fewest_mistakes = 0
-                most_correct = 0
-            
-            # Get ALL scores for this user and game from GameResult for history
-            scores = GameResult.objects.filter(
-                user=user,
-                game=game
-            ).order_by('-played_at')
-            
-            game_history = []
-            
-            for score in scores:
-                # Add streaks and mistakes to the game history
-                game_history.append({
-                    'score': score.score,
-                    'level': score.level_reached,
-                    'date': score.played_at,
-                    'streaks': score.streaks,
-                    'mistakes': score.mistakes,
-                    'correct_answers': getattr(score, 'correct_answers', 0)
+
+        history_by_game = {}
+        results = GameResult.objects.filter(
+            user=user, game__in=games
+        ).order_by('-played_at').values(
+            'game_id', 'score', 'level_reached', 'played_at',
+            'streaks', 'mistakes', 'correct_answers',
+        )
+        play_counts = dict(
+            GameResult.objects.filter(user=user, game__in=games)
+            .values_list('game_id')
+            .annotate(n=Count('id'))
+            .values_list('game_id', 'n')
+        )
+        for row in results:
+            bucket = history_by_game.setdefault(row['game_id'], [])
+            if len(bucket) < self.HISTORY_PER_GAME:
+                bucket.append({
+                    'score': row['score'],
+                    'level': row['level_reached'],
+                    'date': row['played_at'],
+                    'streaks': row['streaks'],
+                    'mistakes': row['mistakes'],
+                    'correct_answers': row['correct_answers'],
                 })
-            
-            # Use name as key since slug doesn't exist
-            game_key = game.name.lower().replace(' ', '-')
-            
+
+        result = {'category': category_name, 'games': []}
+
+        for game in games:
+            best = bests.get(game.id)
+            fewest_mistakes = best.fewest_mistakes if best else 0
+
             result['games'].append({
-                'key': game_key,
+                'key': game.name.lower().replace(' ', '-'),
                 'name': game.name,
-                'best_score': best_score,
-                'best_level': best_level,
-                'best_streak': best_streak,
+                'best_score': best.score if best else 0,
+                'best_level': best.level_reached if best else 1,
+                'best_streak': best.best_streak if best else 0,
                 'fewest_mistakes': fewest_mistakes if fewest_mistakes < 999 else 0,
-                'most_correct': most_correct,
-                'history': game_history,  # This will contain ALL game plays, not just the best
-                'total_plays': len(game_history)  # Add total plays count
+                'most_correct': best.most_correct if best else 0,
+                'history': history_by_game.get(game.id, []),
+                'total_plays': play_counts.get(game.id, 0),
             })
         
         return Response(result)
@@ -324,21 +302,20 @@ class UserStatsView(APIView):
         
         # Get all game results for the user (using current GameResult model)
         all_scores = GameResult.objects.filter(user=user)
-        best_scores = BestScore.objects.filter(user=user)
-        
+
         # Calculate total games played
         total_games = all_scores.count()
-        
+
         # Calculate average score
         avg_score = all_scores.aggregate(avg=Avg('score'))['avg'] or 0
-        
-        # Find best category by average score
+
+        # Find best category by average score. Joined in SQL rather than
+        # touching score.game.category once per row.
         category_scores = {}
-        for score in best_scores:
-            category = score.game.category
-            if category not in category_scores:
-                category_scores[category] = []
-            category_scores[category].append(score.score)
+        for category, score in BestScore.objects.filter(user=user).values_list(
+            'game__category', 'score'
+        ):
+            category_scores.setdefault(category, []).append(score)
         
         best_category = None
         best_category_avg = 0
@@ -363,7 +340,11 @@ class UserStatsView(APIView):
         # Calculate play streak with better debugging
         from django.utils import timezone
         today = timezone.now().date()
-        play_dates = set(score.played_at.date() for score in all_scores if score.played_at)
+        play_dates = set(
+            played_at.date()
+            for played_at in all_scores.values_list('played_at', flat=True)
+            if played_at
+        )
         
         print(f"=== Streak Debug for user {user.username}: today={today}, play_dates={sorted(play_dates)}")
         
@@ -421,7 +402,9 @@ class RecentGamesView(APIView):
         user = request.user
         
         # Get last 10 games played using GameResult model
-        recent_results = GameResult.objects.filter(user=user).order_by('-played_at')[:10]
+        recent_results = GameResult.objects.filter(
+            user=user
+        ).select_related('game').order_by('-played_at')[:10]
         
         games_data = []
         for result in recent_results:
@@ -449,8 +432,11 @@ class LevelStatsView(APIView):
             # Count total users
             total_users = CustomUser.objects.count()
             
-            # Count users below this level
-            users_below_level = CustomUser.objects.filter(level__lt=level).count()
+            # `level` is a property, not a column: filtering on it raised
+            # FieldError and this endpoint always 500'd behind the except below.
+            users_below_level = CustomUser.objects.filter(
+                experience__lt=CustomUser.experience_for_level(level)
+            ).count()
             
             # Calculate percentage
             if total_users > 0:

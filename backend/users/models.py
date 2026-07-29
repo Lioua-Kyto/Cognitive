@@ -28,11 +28,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    experience = models.PositiveIntegerField(default=0)
+    experience = models.PositiveIntegerField(default=0, db_index=True)
 
     USERNAME_FIELD = 'email'
 
     objects = CustomUserManager()
+
+    @staticmethod
+    def experience_for_level(level):
+        """Cumulative XP needed to reach `level`. Inverse of the `level` property.
+
+        Lets callers filter on the indexed `experience` column; `level` itself is
+        a Python property and cannot appear in a queryset filter.
+        """
+        return sum(100 + (lvl - 1) * 25 for lvl in range(1, max(level, 1)))
 
     @property
     def level(self):

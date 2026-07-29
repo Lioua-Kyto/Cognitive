@@ -13,7 +13,7 @@ class Game(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True)
     base_xp_reward = models.IntegerField(default=10, help_text="Base XP awarded for completing this game")
     difficulty_multiplier = models.FloatField(default=1.0, help_text="Multiplier for XP based on difficulty")
 
@@ -51,7 +51,7 @@ class MultiplayerMatch(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, limit_choices_to={'category': 'competitive'})
     player1 = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE, related_name='matches_as_player1')
     player2 = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE, related_name='matches_as_player2', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=MATCH_STATUS_CHOICES, default='waiting')
+    status = models.CharField(max_length=20, choices=MATCH_STATUS_CHOICES, default='waiting', db_index=True)
     winner = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='won_matches')
     
     # Match data

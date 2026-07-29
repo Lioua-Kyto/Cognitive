@@ -13,7 +13,7 @@ class Friendship(models.Model):
     
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_requests')
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_requests')
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -49,10 +49,10 @@ class ChatMessage(models.Model):
     
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages', null=True, blank=True)
-    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES)
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, db_index=True)
     content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_read = models.BooleanField(default=False, db_index=True)
     
     class Meta:
         ordering = ['-timestamp']
@@ -78,7 +78,7 @@ class Notification(models.Model):
     title = models.CharField(max_length=200)
     message = models.TextField()
     data = models.JSONField(default=dict, blank=True)  # Additional data for the notification
-    is_read = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
