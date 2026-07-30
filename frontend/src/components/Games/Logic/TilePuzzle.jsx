@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitTilePuzzle } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 function generateTilePuzzle(level) {
   const size = Math.min(3 + Math.floor(level / 3), 4); // 3x3 to 4x4 based on level

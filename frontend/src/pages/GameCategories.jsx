@@ -4,7 +4,6 @@ import useCategories from "../queries/useCategories.js";
 import { useCategoryStats } from "../queries/useUserData.js";
 import SectionDrawing from "../ui/SectionDrawing.jsx";
 import { useSolarPosition } from "../ui/useSolarPosition.js";
-import "./Styles/GameCategories.css";
 
 export default function GameCategories() {
   const { categories, loading: categoriesLoading } = useCategories();

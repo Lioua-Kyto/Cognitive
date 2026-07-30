@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitFaceNameMatch } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 // Sample face data with emoji faces and names
 const faceData = [

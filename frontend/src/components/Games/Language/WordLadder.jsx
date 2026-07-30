@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitWordLadder } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 function generateWordLadder(level) {
   // Word pairs with known ladder solutions

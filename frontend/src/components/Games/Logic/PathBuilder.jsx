@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitPathBuilder } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 function generatePathPuzzle(level) {
   const gridSize = Math.min(5 + Math.floor(level / 2), 8); // 5x5 to 8x8 grid

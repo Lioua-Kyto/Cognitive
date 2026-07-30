@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { register } from "../../api/auth";
-import "./Auth.css";
 
 export default function RegisterForm({ onSwitchToLogin }) {
   const [form, setForm] = useState({

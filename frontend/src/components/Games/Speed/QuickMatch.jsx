@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitQuickMatch } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 // Shape and color combinations
 const SHAPES = ["circle", "square", "triangle", "diamond", "star", "hexagon"];

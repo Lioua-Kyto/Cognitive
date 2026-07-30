@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitSymbolEquation } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 function generateSymbolEquation(level) {
   const symbols = ["★", "♦", "●", "▲", "♠", "♥", "♣", "◆", "■", "▼"];

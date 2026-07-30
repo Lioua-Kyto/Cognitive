@@ -1,6 +1,5 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import "./Styles/GamePauseModal.css";
 
 export default function GamePauseModal({
   show,

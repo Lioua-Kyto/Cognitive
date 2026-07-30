@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSocial } from "../../context/SocialContext";
 import { useNotifications } from "../../context/NotificationContext";
-import "./SocialSidebar.css";
 
 const SocialSidebar = ({ isOpen, onClose, onNavigateToSocial }) => {
   const {

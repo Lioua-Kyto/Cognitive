@@ -3,7 +3,6 @@ import React, { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { queryKeys } from "../queries/keys.js";
-import "./AchievementTooltip.css";
 
 async function fetchStats(kind, id, token) {
   const res = await fetch(`${API_BASE}/users/${kind}/${id}/stats/`, {

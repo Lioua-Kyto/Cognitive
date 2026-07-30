@@ -31,7 +31,6 @@ import {
 } from "../api/profile.jsx";
 import { AchievementsAPI } from "../api/achievements.jsx";
 import AchievementTooltip from "../components/AchievementTooltip.jsx";
-import "./Styles/Profile.css";
 import Dashboard from "./Dashboard";
 import { fetchCategories } from "../api/categories";
 import {

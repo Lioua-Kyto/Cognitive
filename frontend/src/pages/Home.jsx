@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import useCategories from "../queries/useCategories.js";
 import { enhanceCategories } from "../components/Categories/CategoryData.jsx";
-import "./Styles/Home.css";
 
 // Scientist slideshow data
 const scientistSlides = [

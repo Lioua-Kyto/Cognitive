@@ -38,3 +38,7 @@ Thumbs.db
 
 # Vite build output
 frontend/dist/
+
+# Archive of the pre-refactor project — 16.5 MB, not source
+Cognitive.zip
+*.zip

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { gamesByCategory } from "../components/Categories/CategoryData.jsx";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { fetchGameHistoryDetails } from "../api/profile.jsx";
-import "./Styles/GameList.css";
 
 const EMPTY_STATS = { plays: 0, bestLevel: 1, bestScore: 0 };
 

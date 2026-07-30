@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useSocial } from "../context/SocialContext";
 import { useNotifications } from "../context/NotificationContext";
 import UserProfileModal from "../components/UserProfileModal";
-import "./Styles/SocialModern.css";
 
 // Utility function to ensure absolute URLs for images (same as Profile component)
 const ensureAbsoluteUrl = (url) => {

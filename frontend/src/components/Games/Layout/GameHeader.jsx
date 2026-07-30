@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import "./Styles/GameHeader.css";
 
 export default function GameHeader({
   level,

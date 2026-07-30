@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { useLevelUp } from "../context/LevelUpContext";
-import "./LevelUpNotification.css";
 
 const LevelUpNotification = () => {
   const { levelUpData, clearLevelUp } = useLevelUp();

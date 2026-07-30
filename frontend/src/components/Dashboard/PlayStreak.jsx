@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "./PlayStreak.css";
 
 const PlayStreak = ({ userStats }) => {
   const [currentStreak, setCurrentStreak] = useState(0);

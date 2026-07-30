@@ -2,7 +2,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useSocial } from "../../context/SocialContext";
 import SocialSidebar from "../Navbar/SocialSidebar";
-import "./Navbar.css";
 
 export default function Navbar() {
   const [showSocialSidebar, setShowSocialSidebar] = useState(false);

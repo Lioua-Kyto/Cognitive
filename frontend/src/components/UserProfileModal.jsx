@@ -5,7 +5,6 @@ import { useNotifications } from "../context/NotificationContext";
 import { useSocial } from "../context/SocialContext";
 import { AuthContext } from "../context/AuthContext";
 import { profileAPI } from "../api/profile.jsx";
-import "./Styles/UserProfileModal.css";
 
 // Utility function to ensure absolute URLs for images (same as Profile component)
 const ensureAbsoluteUrl = (url) => {

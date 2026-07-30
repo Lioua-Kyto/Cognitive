@@ -11,7 +11,6 @@ import {
 import { AchievementsAPI } from "../api/achievements.jsx";
 import { queryKeys } from "../queries/keys.js";
 import PlayStreak from "../components/Dashboard/PlayStreak";
-import "./Styles/Dashboard.css";
 
 const mostRecentlyEarned = (items, count) =>
   (items ?? [])

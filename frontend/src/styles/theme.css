@@ -1,4 +1,9 @@
+/* Declared before anything else so `legacy` sits below Tailwind's own layers and
+   loses to them. A @layer statement is allowed to precede @import. */
+@layer legacy;
+
 @import "tailwindcss";
+@import "./legacy.css";
 
 /*
  * THE SECTION — token layer.

@@ -2,7 +2,6 @@ import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../api/auth";
 import { AuthContext } from "../../context/AuthContext";
-import "./Auth.css";
 
 export default function LoginForm({ onSwitchToRegister }) {
   const [email, setEmail] = useState("");

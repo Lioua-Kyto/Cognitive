@@ -14,7 +14,6 @@ import Footer from "./components/Layout/Footer.jsx";
 import AchievementNotification from "./components/AchievementNotification.jsx";
 import LevelUpNotification from "./components/LevelUpNotification.jsx";
 import loginImage from "./assets/Pictures/LoginImage.jpeg";
-import "./layout.css";
 
 // Route-level code splitting. GameScreen in particular statically pulled in all
 // 25 game components and their audio, so every visitor downloaded the whole

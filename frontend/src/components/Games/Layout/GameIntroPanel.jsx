@@ -1,5 +1,4 @@
 import React from "react";
-import "./Styles/GameIntroPanel.css";
 
 export default function GameIntroPanel({
   show = true,

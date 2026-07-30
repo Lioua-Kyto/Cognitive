@@ -19,7 +19,6 @@ import {
   playTimer30s,
   playTick,
 } from "../../../utils/soundEffects";
-import "./Styles/GameLayout.css";
 
 export default function GameLayout({
   children,

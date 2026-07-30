@@ -3,7 +3,6 @@ import GameWindow from "../GameWindow.jsx";
 import GameLayout from "../Layout/GameLayout.jsx";
 import { submitNumberRecall } from "../../../api/games.jsx";
 import { fetchUserGameProgress } from "../../../api/score.jsx";
-import "../Styles/games.css";
 
 // Enhanced sequence generator: no consecutive duplicates, no repeat of previous sequence
 function generateUniqueSequence(length, prevSequence = []) {

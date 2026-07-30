@@ -7,7 +7,6 @@ import { useSocial } from "../context/SocialContext";
 import { useNotifications } from "../context/NotificationContext";
 import { profileAPI } from "../api/profile.jsx";
 import { gamesAPI } from "../api/games.jsx";
-import "./Styles/ProfileVisit.css";
 
 // Utility function to ensure absolute URLs for images (same as Profile component)
 const ensureAbsoluteUrl = (url) => {

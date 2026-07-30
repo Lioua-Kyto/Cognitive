@@ -21,7 +21,9 @@ export const decodeToken = (token) => {
 export const refreshToken = async () => {
   const stored = localStorage.getItem("refreshToken");
   if (!stored) {
-    clearSession();
+    // Deliberately does not clear the session. A caller reaching here with a
+    // still-valid access token would otherwise be logged out by a missing
+    // refresh token, which is a state the app can recover from on its own.
     throw new Error("No refresh token found");
   }
 

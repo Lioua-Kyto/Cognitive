@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import "./Styles/games.css";
 
 export default function GameWindow({ children }) {
   const windowRef = useRef(null);

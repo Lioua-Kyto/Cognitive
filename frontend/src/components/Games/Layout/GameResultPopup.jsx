@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "./Styles/GameResultPopup.css";
 
 function Confetti({ show, duration = 1800 }) {
   const [visible, setVisible] = useState(show);

@@ -13,8 +13,6 @@ import {
   gamesByCategory,
 } from "../components/Categories/CategoryData.jsx";
 import { Link } from "react-router-dom";
-import "../components/Games/Styles/games.css";
-import "./Styles/Leaderboard.css";
 
 function LeaderboardTable({ players, highlightUserId, expanded, onExpand }) {
   const rowsToShow = expanded ? 50 : 10;

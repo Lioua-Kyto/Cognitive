@@ -1,6 +1,5 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import "./Styles/GameHelpModal.css";
 
 export default function GameHelpModal({ show, onClose, helpText }) {
   if (!show) return null;

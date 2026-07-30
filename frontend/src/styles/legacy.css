@@ -1,0 +1,37 @@
+/*
+ * Legacy stylesheets, pulled into a single low-precedence cascade layer.
+ *
+ * These were imported ad hoc from ~40 JSX files as unlayered CSS, and unlayered
+ * CSS beats @layer CSS in the cascade no matter the import order - which meant no
+ * Tailwind utility could ever override them. Inside layer(legacy), declared below
+ * Tailwind's own layers, utilities win, and each file can be deleted as its
+ * surface is rebuilt.
+ *
+ * Do not add to this file. New styling goes through the token layer in theme.css.
+ */
+
+@import "../layout.css" layer(legacy);
+@import "../components/AchievementNotification.css" layer(legacy);
+@import "../components/AchievementTooltip.css" layer(legacy);
+@import "../components/Auth/Auth.css" layer(legacy);
+@import "../components/Dashboard/PlayStreak.css" layer(legacy);
+@import "../components/Games/Layout/Styles/GameHeader.css" layer(legacy);
+@import "../components/Games/Layout/Styles/GameHelpModal.css" layer(legacy);
+@import "../components/Games/Layout/Styles/GameIntroPanel.css" layer(legacy);
+@import "../components/Games/Layout/Styles/GameLayout.css" layer(legacy);
+@import "../components/Games/Layout/Styles/GamePauseModal.css" layer(legacy);
+@import "../components/Games/Layout/Styles/GameResultPopup.css" layer(legacy);
+@import "../components/Games/Styles/games.css" layer(legacy);
+@import "../components/Layout/Footer.css" layer(legacy);
+@import "../components/Layout/Navbar.css" layer(legacy);
+@import "../components/LevelUpNotification.css" layer(legacy);
+@import "../components/Navbar/SocialSidebar.css" layer(legacy);
+@import "../components/Styles/UserProfileModal.css" layer(legacy);
+@import "../pages/Styles/Dashboard.css" layer(legacy);
+@import "../pages/Styles/GameCategories.css" layer(legacy);
+@import "../pages/Styles/GameList.css" layer(legacy);
+@import "../pages/Styles/Home.css" layer(legacy);
+@import "../pages/Styles/Leaderboard.css" layer(legacy);
+@import "../pages/Styles/Profile.css" layer(legacy);
+@import "../pages/Styles/ProfileVisit.css" layer(legacy);
+@import "../pages/Styles/SocialModern.css" layer(legacy);

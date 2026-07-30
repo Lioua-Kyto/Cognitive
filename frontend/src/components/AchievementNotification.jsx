@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import "./AchievementNotification.css";
 
 const AchievementNotification = () => {
   const [notifications, setNotifications] = useState([]);
