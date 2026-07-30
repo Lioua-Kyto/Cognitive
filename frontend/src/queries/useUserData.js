@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext.jsx";
 import {
+  fetchCategoryStats,
   fetchGameStats,
   fetchLevelStats,
   fetchRecentGames,
@@ -22,6 +23,17 @@ function useAuthed(keyFn, queryFn, options = {}) {
 
 export function useUserStats() {
   return useAuthed(queryKeys.user.stats, fetchGameStats);
+}
+
+/** Per-domain standing — what the section drawing lights its rooms from. */
+export function useCategoryStats() {
+  const { token, user } = useContext(AuthContext);
+
+  return useQuery({
+    queryKey: queryKeys.user.categoryRanks(user?.id),
+    queryFn: () => fetchCategoryStats(token, user.id),
+    enabled: Boolean(token && user?.id),
+  });
 }
 
 export function useRecentGames() {

@@ -235,6 +235,21 @@ export async function fetchGameHistoryDetails(token, categoryKey) {
 }
 
 // Game Stats functions
+/**
+ * Per-domain standing: rank, best score and has_played for all seven categories.
+ *
+ * Distinct from fetchGameStats below, which hits /leaderboard/user-stats/ and
+ * returns aggregate totals and streaks. Two endpoints, both routed as
+ * "user-stats", different shapes — this is the one with category_stats.
+ */
+export async function fetchCategoryStats(token, userId) {
+  const res = await fetch(`${BASE_URL}/users/stats/${userId}/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch category stats (${res.status})`);
+  return res.json();
+}
+
 export async function fetchGameStats(token) {
   const res = await fetch(`${BASE_URL}/leaderboard/user-stats/`, {
     headers: {

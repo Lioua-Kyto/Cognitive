@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+/*
+ * THE SECTION — token layer.
+ *
+ * A building drawn in architectural section with the sun cutting through it.
+ * Seven rooms, one per cognitive domain, lit or dark by where the user is strong.
+ * Full rationale in docs/design-direction.md.
+ *
+ * Dark is primary, derived from the actual usage scene: 21:30, one lamp on. That
+ * inverts the source world's limewash ground on purpose — the product is about
+ * light and is used in the dark.
+ */
+
+@theme {
+  /* ---- Colour ---------------------------------------------------------- */
+  /* Committed strategy: --color-beam is the only accent and means exactly one
+     thing everywhere, "active now". Never decorative, never joined by a second. */
+
+  --color-ground: #12161c; /* the unlit building */
+  --color-poche: #0a0d11; /* cut structure, deepest */
+  --color-lit: #f4f1ea; /* limewash — a lit room surface */
+  --color-beam: #e8a33d; /* the sun */
+  --color-beam-deep: #c97e1c; /* beam on light ground */
+  --color-shadow: #3a4654; /* withdrawn hours, inactive */
+
+  --color-ink: #f4f1ea;
+  --color-ink-muted: #a8b0ba;
+  --color-ink-faint: #6b7580;
+
+  --color-rule: #242b34; /* hairlines */
+  --color-rule-strong: #3a4654;
+
+  --color-surface: #171c23;
+  --color-surface-raised: #1d232b;
+
+  /* State. Deliberately desaturated so nothing competes with the beam. */
+  --color-positive: #6a9f6e;
+  --color-caution: #c9962c;
+  --color-negative: #b5645c;
+
+  /* Domain tints. Used only in dense data views where position and label are
+     not enough to disambiguate — never as surface identity. The seven-colour
+     scheme this replaces had pairs failing AA and made every screen a fruit
+     salad. */
+  --color-domain-memory: #7d93b2;
+  --color-domain-attention: #b28f7d;
+  --color-domain-speed: #b2a67d;
+  --color-domain-logic: #8b7db2;
+  --color-domain-language: #7db2a4;
+  --color-domain-multi: #a67db2;
+  --color-domain-competitive: #b27d8b;
+
+  /* ---- Type ------------------------------------------------------------ */
+  /* Chosen off this world's register — technical drawing lettering and tabular
+     measurement — and deliberately away from the AI-default faces. */
+
+  /* One variable family with a real wdth axis (62%–125%), so "Expanded" is a
+     width setting rather than a second font file to download. */
+  --font-display: "Archivo Variable", system-ui, sans-serif;
+  --font-sans: "Archivo Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Chivo Mono Variable", ui-monospace, "Cascadia Mono", monospace;
+
+  /* 1.25 major third on a 16px base, fluid at the display end. */
+  --text-display-xl: clamp(3rem, 8vw, 6.5rem);
+  --text-display-xl--line-height: 1.02;
+  --text-display-xl--letter-spacing: -0.02em;
+
+  --text-display-l: clamp(2.25rem, 5vw, 3.75rem);
+  --text-display-l--line-height: 1.06;
+  --text-display-l--letter-spacing: -0.015em;
+
+  --text-heading-l: 1.953rem;
+  --text-heading-l--line-height: 1.2;
+  --text-heading-m: 1.563rem;
+  --text-heading-m--line-height: 1.25;
+  --text-heading-s: 1.25rem;
+  --text-heading-s--line-height: 1.3;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-body-s: 0.8rem;
+  --text-body-s--line-height: 1.5;
+
+  /* Drawing annotation: tracked caps. */
+  --text-label: 0.8rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.08em;
+
+  --text-figure-xl: clamp(2.5rem, 6vw, 4rem);
+  --text-figure-xl--line-height: 1;
+  --text-figure: 1.25rem;
+  --text-figure--line-height: 1.2;
+
+  /* ---- Space ----------------------------------------------------------- */
+  /* A section drawing has storeys, and that is the vertical rhythm. The storey
+     module is what produces the drawn-to-scale feel a plain 8px grid never does. */
+
+  --spacing: 0.25rem; /* 4px base; Tailwind derives its scale from this */
+  --spacing-storey: 6rem; /* 96px */
+  --spacing-storey-half: 3rem;
+
+  /* ---- Structure ------------------------------------------------------- */
+  --radius-none: 0;
+  --radius-hair: 2px;
+  --radius-room: 4px;
+
+  --container-frame: 75rem; /* 1200px reading frame */
+  --container-page: 90rem; /* 1440px max */
+
+  /* Hairlines, not borders. */
+  --border-width-hair: 1px;
+
+  /* ---- Motion ---------------------------------------------------------- */
+  /* Light moving through a building. Authored once, orchestrated. */
+  --ease-beam: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-room: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-flood: 900ms;
+  --duration-warm: 400ms;
+  --duration-hair: 160ms;
+}
+
+/* Daylight mode: the source world's own ground, for daytime use. */
+@layer theme {
+  :root[data-theme="light"] {
+    --color-ground: #f4f1ea;
+    --color-poche: #23282f;
+    --color-lit: #ffffff;
+    --color-beam: #c97e1c;
+    --color-shadow: #8c949e;
+
+    --color-ink: #171c22;
+    --color-ink-muted: #4d5560;
+    --color-ink-faint: #8c949e;
+
+    --color-rule: #ddd8cc;
+    --color-rule-strong: #b8b2a4;
+
+    --color-surface: #ffffff;
+    --color-surface-raised: #faf8f3;
+  }
+}
+
+/*
+ * Deliberately NOT inside @layer. The legacy page stylesheets are unlayered, and
+ * unlayered CSS beats layered CSS in the cascade regardless of import order — so
+ * a @layer base body rule would lose to layout.css. Unlayered plus last-imported
+ * makes source order decide, which is what we want while the old surfaces are
+ * still being replaced.
+ */
+
+/* There is no z-index scale in the current build, which is why modals and
+ toasts fight. */
+:root {
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;
+  --z-overlay: 1000;
+  --z-modal: 1100;
+  --z-toast: 1200;
+}
+
+html {
+  color-scheme: dark light;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display register: the wide end of the width axis reads as a drawing's title
+   block. Applied here so every display size gets it without repetition. */
+.font-display {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 600;
+}
+
+/* Drawing annotation: tracked caps at the narrow end of the axis. */
+.font-label {
+  font-family: var(--font-sans);
+  font-stretch: 88%;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Numbers that shift width while counting are the most common tell of an
+   un-designed data product. */
+[data-figure],
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-beam);
+  outline-offset: 2px;
+}
+
+/* The world ships its own reduced-motion answer: preserve a still noon state.
+   The beam sits at noon, every room shows its true lit state, nothing travels.
+   This build is complete, not degraded. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
