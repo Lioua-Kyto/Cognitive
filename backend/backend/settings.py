@@ -10,9 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
-from datetime import timedelta
 import os
+from datetime import timedelta
+from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
@@ -74,8 +74,10 @@ INSTALLED_APPS = [
     ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # Serves collected static files with DEBUG off; Django itself will not.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -196,6 +198,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For collectstatic output
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Your actual static files location
 ]
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

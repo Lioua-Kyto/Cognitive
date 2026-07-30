@@ -1,7 +1,6 @@
-from django.db import models
-from users.models import CustomUser
-from django.utils import timezone
 from django.conf import settings
+from django.db import models
+
 
 class Friendship(models.Model):
     """Model to represent friendships between users"""

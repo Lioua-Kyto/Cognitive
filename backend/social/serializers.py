@@ -1,6 +1,9 @@
 from rest_framework import serializers
+
 from users.models import CustomUser
-from .models import Friendship, UserStatus, ChatMessage, Notification
+
+from .models import ChatMessage, Friendship, Notification, UserStatus
+
 
 class SearchUserSerializer(serializers.ModelSerializer):
     """Simplified serializer for user search results with more complete data"""

@@ -1,6 +1,9 @@
 from rest_framework import serializers
-from .models import GameScore, BestScore
+
 from users.models import CustomUser
+
+from .models import BestScore, GameScore
+
 
 class UserPublicSerializer(serializers.ModelSerializer):
     country_flag = serializers.SerializerMethodField()

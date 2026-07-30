@@ -1,8 +1,8 @@
 from django.db import models
-from users.models import CustomUser
+
 from games.models import Game
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from users.models import CustomUser
+
 
 class GameResult(models.Model):
     """Individual game session results"""

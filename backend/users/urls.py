@@ -1,5 +1,22 @@
 from django.urls import path
-from .views import *
+
+from .views import (
+    CountryListView,
+    UserDetailView,
+    UserLoginView,
+    UserRegisterView,
+    UserUpdateProfileView,
+    get_achievement_stats,
+    get_all_achievements,
+    get_all_badges,
+    get_badge_stats,
+    get_user_achievements,
+    get_user_badges,
+    get_user_best_scores,
+    get_user_category_ranks,
+    get_user_profile,
+    get_user_stats,
+)
 
 urlpatterns = [
     path('register/', UserRegisterView.as_view(), name='user-register'),

@@ -1,18 +1,24 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from users.models import CustomUser
-from django.db.models import Q
-from django.utils import timezone
-from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from .models import Friendship, UserStatus, ChatMessage, Notification
+from channels.layers import get_channel_layer
+from django.db.models import Q
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from users.models import CustomUser
+
+from .models import ChatMessage, Friendship, Notification, UserStatus
 from .serializers import (
-    FriendshipSerializer, UserStatusSerializer, ChatMessageSerializer,
-    NotificationSerializer, SendFriendRequestSerializer, SendMessageSerializer,
-    UserSerializer, SearchUserSerializer
+    ChatMessageSerializer,
+    FriendshipSerializer,
+    NotificationSerializer,
+    SearchUserSerializer,
+    SendFriendRequestSerializer,
+    SendMessageSerializer,
+    UserSerializer,
 )
+
 
 class SocialViewSet(viewsets.ViewSet):
     """ViewSet for social features"""
@@ -74,8 +80,8 @@ class SocialViewSet(viewsets.ViewSet):
             
             # Check if users are already friends or have pending request
             existing = Friendship.objects.filter(
-                (Q(requester=request.user, receiver=receiver) | 
-                 Q(requester=receiver, receiver=request.user))
+                Q(requester=request.user, receiver=receiver) | 
+                 Q(requester=receiver, receiver=request.user)
             ).first()
             
             if existing:
@@ -95,7 +101,7 @@ class SocialViewSet(viewsets.ViewSet):
             sender_name = request.user.username
             
             # Create notification
-            notification = Notification.objects.create(
+            Notification.objects.create(
                 user=receiver,
                 notification_type='friend_request',
                 title='New Friend Request',
@@ -250,7 +256,7 @@ class SocialViewSet(viewsets.ViewSet):
             return Response({'error': 'Query must be at least 1 character'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Split query into words for full name search
-        query_words = query.strip().split()
+        query.strip().split()
 
         # Search for username match (case-insensitive)
         users = CustomUser.objects.filter(

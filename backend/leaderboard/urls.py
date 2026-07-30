@@ -1,5 +1,21 @@
 from django.urls import path
-from .views import *
+
+from .views import (
+    CategoryLeaderboardView,
+    GameLeaderboardView,
+    GameScoreByGameView,
+    GameScoreListView,
+    GlobalLeaderboardView,
+    LevelStatsView,
+    RecentGamesView,
+    UserDetailedGameHistory,
+    UserGameProgressView,
+    UserGamesByCategory,
+    UserProgressHistory,
+    UserRankCategoryView,
+    UserRankGlobalView,
+    UserStatsView,
+)
 
 urlpatterns = [
     path('global/', GlobalLeaderboardView.as_view(), name='global-leaderboard'),

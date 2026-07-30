@@ -35,10 +35,10 @@ def record_game_result(user, game_name, score, level, streaks=0, mistakes=0, cor
     """
     try:
         game = Game.objects.get(name=game_name)
-    except Game.DoesNotExist:
+    except Game.DoesNotExist as exc:
         raise Game.DoesNotExist(
             f"No seeded game named {game_name!r}. Run `manage.py populate_games`."
-        )
+        ) from exc
 
     xp_earned = calculate_game_xp(game, score, level, streaks, mistakes)
 

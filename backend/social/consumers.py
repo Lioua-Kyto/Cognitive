@@ -1,9 +1,12 @@
-import logging
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
+import logging
+
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+
 from users.models import CustomUser
-from .models import ChatMessage, UserStatus, Notification
+
+from .models import ChatMessage, Notification, UserStatus
 from .serializers import ChatMessageSerializer, NotificationSerializer
 
 logger = logging.getLogger(__name__)
@@ -68,7 +71,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             elif message_type == 'mark_read':
                 await self.handle_mark_read(data)
                 
-        except Exception as e:
+        except Exception:
             logger.exception("Error in receive")
     
     async def handle_send_message(self, data):
@@ -129,7 +132,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
 
             logger.debug('Chat message delivered')
 
-        except Exception as e:
+        except Exception:
             logger.exception("Error handling send message")
             await self.send(text_data=json.dumps({
                 'type': 'error',
@@ -208,7 +211,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             
             serializer = ChatMessageSerializer(message)
             return serializer.data
-        except Exception as e:
+        except Exception:
             logger.exception("Error creating message")
             return None
     
@@ -230,7 +233,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             
             serializer = NotificationSerializer(notification)
             return serializer.data
-        except Exception as e:
+        except Exception:
             logger.exception("Error creating notification")
             return None
     
@@ -249,7 +252,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
             user_status.status = status
             user_status.save()
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("Error updating status")
             return False
     
@@ -261,8 +264,9 @@ class SocialConsumer(AsyncWebsocketConsumer):
             if self.user.is_anonymous:
                 return []
                 
-            from .models import Friendship
             from django.db.models import Q
+
+            from .models import Friendship
             
             friendships = Friendship.objects.filter(
                 (Q(requester=self.user) | Q(receiver=self.user)) & Q(status='accepted')
@@ -274,7 +278,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
                 friends.append(friend.id)
             
             return friends
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting friends")
             return []
     
@@ -293,7 +297,7 @@ class SocialConsumer(AsyncWebsocketConsumer):
                     is_read=False
                 ).update(is_read=True)
             return True
-        except Exception as e:
+        except Exception:
             logger.exception("Error marking notifications read")
             return False
     
@@ -338,15 +342,16 @@ class SocialConsumer(AsyncWebsocketConsumer):
                 'friends': friends,
                 'user_id': self.user.id
             }))
-        except Exception as e:
+        except Exception:
             logger.exception("Error sending initial data")
     
     @database_sync_to_async
     def get_friends_with_status(self):
         """Get friends with their status"""
         try:
-            from .models import Friendship
             from django.db.models import Q
+
+            from .models import Friendship
             from .serializers import UserSerializer
             
             friendships = Friendship.objects.filter(
@@ -361,6 +366,6 @@ class SocialConsumer(AsyncWebsocketConsumer):
             # Use the serializer with context to get full user data including status
             serializer = UserSerializer(friends, many=True, context={'request': None})
             return serializer.data
-        except Exception as e:
+        except Exception:
             logger.exception("Error getting friends with status")
             return []

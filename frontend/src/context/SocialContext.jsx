@@ -189,6 +189,11 @@ export const SocialProvider = ({ children, token, userId }) => {
 
   // Set user offline when leaving the page
   useEffect(() => {
+    // Only meaningful with a session. Registered unconditionally before, so an
+    // unauthenticated page unload went down the token-refresh path with no token
+    // and threw "No refresh token found" into the console.
+    if (!token) return;
+
     const handleBeforeUnload = () => {
       updateUserStatus("offline");
     };
@@ -198,7 +203,7 @@ export const SocialProvider = ({ children, token, userId }) => {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [token]);
 
   // Handle WebSocket messages
   const handleWebSocketMessage = (data) => {

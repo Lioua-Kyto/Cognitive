@@ -1,9 +1,9 @@
-from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import CustomUser, Achievement, UserAchievement, Badge, UserBadge
-from leaderboard.models import BestScore
 from django_countries.serializers import CountryFieldMixin
-from django_countries import countries
+from rest_framework import serializers
+
+from .models import CustomUser, UserAchievement, UserBadge
+
 
 class UserRegistrationSerializer(CountryFieldMixin, serializers.ModelSerializer):
     password1 = serializers.CharField(write_only=True, min_length=8)
@@ -24,13 +24,6 @@ class UserRegistrationSerializer(CountryFieldMixin, serializers.ModelSerializer)
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError("A user with this email already exists.")
         return value
-    
-    
-    def validate(self, data):
-        if data['password1'] != data['password2']:
-            raise serializers.ValidationError("Passwords do not match.")
-        
-        return data
 
     def create(self, validated_data):
         password = validated_data.pop('password1')

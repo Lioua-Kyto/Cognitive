@@ -1,18 +1,26 @@
-from rest_framework import generics, permissions, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import api_view, permission_classes
-from django.conf import settings
+from django.db.models import Max
 from django.shortcuts import get_object_or_404
-from django.db.models import Max, Count, Q
-from .models import CustomUser, Achievement, UserAchievement, Badge, UserBadge
-from leaderboard.models import BestScore, GameResult
-from games.models import Game
-from .serializers import *
-from .services.achievements import get_achievement_progress, check_and_award_achievements
-from rest_framework_simplejwt.tokens import RefreshToken
 from django_countries import countries
+from rest_framework import generics, permissions, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from games.models import Game
+from leaderboard.models import BestScore, GameResult
+
+from .models import Achievement, Badge, CustomUser, UserAchievement, UserBadge
+from .serializers import (
+    UserDetailSerializer,
+    UserLoginSerializer,
+    UserProfileSerializer,
+    UserRegistrationSerializer,
+    UserUpdateSerializer,
+)
+from .services.achievements import get_achievement_progress
+
 
 class UserRegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()

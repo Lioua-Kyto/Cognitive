@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import Friendship, UserStatus, ChatMessage, Notification
-from users.models import CustomUser
+
+from .models import ChatMessage, Friendship, Notification, UserStatus
 
 
 @admin.register(Friendship)

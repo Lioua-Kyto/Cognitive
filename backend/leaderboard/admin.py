@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import *
+
+from .models import (
+    BestScore,
+    GameResult,
+    GameScore,
+)
+
 
 class GameScoreAdmin(admin.ModelAdmin):
     list_display = ('user', 'game', 'score', 'level_reached', 'last_played')

@@ -1,15 +1,18 @@
-from rest_framework import generics
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import GameScore, BestScore, GameResult
-from games.models import Game
-from .serializers import GameScoreSerializer, BestScoreSerializer
-from users.models import CustomUser
-from django.db.models import Sum, Max, Avg, Count, Q
+from datetime import timedelta
+
+from django.db.models import Avg, Count, Sum
 from django.db.models.functions import TruncDate
-from .helpers import get_user_leaderboard_info, get_users_leaderboard_info, leaderboard_limit
-from datetime import datetime, timedelta
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from games.models import Game
+from users.models import CustomUser
+
+from .helpers import get_users_leaderboard_info, leaderboard_limit
+from .models import BestScore, GameResult, GameScore
+from .serializers import GameScoreSerializer
 
 
 def _with_user_info(rows, request):
@@ -333,11 +336,11 @@ class UserStatsView(APIView):
         # Calculate play streak with better debugging
         from django.utils import timezone
         today = timezone.now().date()
-        play_dates = set(
+        play_dates = {
             played_at.date()
             for played_at in all_scores.values_list('played_at', flat=True)
             if played_at
-        )
+        }
         
         
         current_streak = 0
@@ -370,9 +373,12 @@ class UserStatsView(APIView):
         
         played_dates = [date.isoformat() for date in play_dates if date >= (today - timedelta(days=7))]
         
-        # Calculate categories played
-        categories_played = best_scores.values_list('game__category', flat=True).distinct().count()
-        
+        # category_scores was built above from a single values_list join; the
+        # `best_scores` queryset it replaced no longer exists.
+        best_totals = BestScore.objects.filter(user=user).aggregate(
+            levels=Sum('level_reached')
+        )
+
         return Response({
             'total_games': total_games,
             'average_score': round(avg_score, 1),
@@ -381,8 +387,8 @@ class UserStatsView(APIView):
             'currentStreak': current_streak,
             'longestStreak': longest_streak,
             'playedDates': played_dates,
-            'total_levels': sum(score.level_reached for score in best_scores) or user.total_xp // 100,  # Estimate levels from XP
-            'categories_played': categories_played
+            'total_levels': best_totals['levels'] or user.experience // 100,
+            'categories_played': len(category_scores),
         })
 
 # Recent Games View
@@ -430,10 +436,7 @@ class LevelStatsView(APIView):
             ).count()
             
             # Calculate percentage
-            if total_users > 0:
-                percentage_below = (users_below_level / total_users) * 100
-            else:
-                percentage_below = 0
+            percentage_below = users_below_level / total_users * 100 if total_users > 0 else 0
                 
             return Response({
                 'level': level,

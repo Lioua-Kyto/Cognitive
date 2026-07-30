@@ -1,6 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import *
+
+from .models import (
+    Achievement,
+    Badge,
+    CustomUser,
+    UserAchievement,
+    UserBadge,
+)
+
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser

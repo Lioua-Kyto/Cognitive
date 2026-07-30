@@ -1,0 +1,30 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["*/migrations/*", ".venv", "staticfiles"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # import order
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "DJ",   # flake8-django
+    "T20",  # no print()
+    "C4",   # comprehensions
+    "SIM",  # simplify
+]
+ignore = [
+    "E501",  # line length is the formatter's job
+    "B008",  # DRF and Django idiomatically call in argument defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Seed commands legitimately write to stdout.
+"*/management/commands/*" = ["T20"]
+"backend/settings*.py" = ["F403", "F405"]
+"tests/*" = ["B011"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend", "games", "users", "leaderboard", "social"]

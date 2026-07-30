@@ -1,8 +1,9 @@
+
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import Max
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django_countries.fields import CountryField
-import math
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):

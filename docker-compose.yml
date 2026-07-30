@@ -1,0 +1,74 @@
+# Local development stack. `docker compose up` gives a working backend with the
+# Postgres and Redis it needs; the frontend still runs on the host via
+# `npm --prefix frontend run dev` so Vite's HMR stays fast.
+#
+# Redis is not optional: db 1 backs the Channels layer and db 2 the cache. The
+# in-memory channel layer this project used to run is per-process, so every
+# HTTP-to-WebSocket push silently reached nobody.
+
+name: cognitive
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-Cognitive}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-Cognitive}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # Cache eviction on db 2 is fine; the channel layer on db 1 is short-lived.
+    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # Deliberately not published to the host: only the backend talks to it, over
+    # the compose network. Publishing it would also collide with any other
+    # project already holding 6379.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    env_file: ./backend/.env
+    environment:
+      # Service names override whatever .env says for the host loopback.
+      POSTGRES_HOST: db
+      REDIS_URL: redis://redis:6379
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      DJANGO_SEED: "1"
+    volumes:
+      - ./backend:/app
+      - media:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/api/health/"]
+      interval: 10s
+      timeout: 5s
+      start_period: 40s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  media:
