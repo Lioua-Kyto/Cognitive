@@ -31,7 +31,10 @@
 
   --color-ink: #f4f1ea;
   --color-ink-muted: #a8b0ba;
-  --color-ink-faint: #6b7580;
+  /* Solved for WCAG AA rather than picked by eye: 5.5:1 on --color-surface,
+     5.83 on --color-ground, 5.08 on --color-surface-raised. The previous #6b7580
+     was 3.65 and failed on all three. */
+  --color-ink-faint: #8a939e;
 
   --color-rule: #242b34; /* hairlines */
   --color-rule-strong: #3a4654;
@@ -171,6 +174,17 @@ html {
 
 :root[data-theme="light"] {
   color-scheme: light;
+}
+
+/* The legacy shell paints its own background over the body — .main-content sets
+   var(--color-background), the old cream — so setting body alone left every
+   redesigned surface as light text on a light ground. These three carry the app
+   shell and have to take the token ground with it. */
+.app-container,
+.main-content,
+.scrollable-content {
+  background: var(--color-ground);
+  color: var(--color-ink);
 }
 
 body {

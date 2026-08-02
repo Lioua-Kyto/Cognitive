@@ -37,8 +37,15 @@ export function useScrollBeam({ distance = 2 } = {}) {
     // Progress is written to state rather than tweened onto the DOM because the
     // rooms are React-rendered; the only thing GSAP animates directly is nothing,
     // which keeps every frame to a fill-opacity change on already-composited SVG.
+    // The window never scrolls: layout.css sets overflow:hidden on html, body
+    // and .app-container, and .scrollable-content is the real scroll container.
+    // ScrollTrigger defaults to the window, so without this it silently never
+    // fires — which is why no scroll animation appeared at all.
+    const scroller = ref.current.closest(".scrollable-content") ?? undefined;
+
     const trigger = ScrollTrigger.create({
       trigger: ref.current,
+      scroller,
       start: "top top",
       end: `+=${distance * 100}%`,
       pin: true,
