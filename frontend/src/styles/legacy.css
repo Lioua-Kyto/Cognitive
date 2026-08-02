@@ -30,7 +30,6 @@
 @import "../pages/Styles/Dashboard.css" layer(legacy);
 @import "../pages/Styles/GameCategories.css" layer(legacy);
 @import "../pages/Styles/GameList.css" layer(legacy);
-@import "../pages/Styles/Home.css" layer(legacy);
 @import "../pages/Styles/Leaderboard.css" layer(legacy);
 @import "../pages/Styles/Profile.css" layer(legacy);
 @import "../pages/Styles/ProfileVisit.css" layer(legacy);
