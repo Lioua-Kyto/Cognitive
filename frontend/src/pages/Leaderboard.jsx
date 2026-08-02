@@ -1,115 +1,137 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "../queries/keys.js";
 import {
-  GlobalLeaderboard,
   CategoryLeaderboard,
   GameLeaderboard,
+  GlobalLeaderboard,
   UserGameProgress,
 } from "../api/leaderboard.jsx";
 import useCategories from "../queries/useCategories.js";
-import {
-  enhanceCategories,
-  gamesByCategory,
-} from "../components/Categories/CategoryData.jsx";
-import { Link } from "react-router-dom";
+import { gamesByCategory } from "../components/Categories/CategoryData.jsx";
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function Rank({ index }) {
+  return (
+    <span className="tabular text-body-s text-ink-muted" data-figure>
+      {MEDALS[index] ?? index + 1}
+    </span>
+  );
+}
 
 function LeaderboardTable({ players, highlightUserId, expanded, onExpand }) {
-  const rowsToShow = expanded ? 50 : 10;
-  const displayPlayers = [...players];
-  while (displayPlayers.length < rowsToShow) {
-    displayPlayers.push({
-      user: null,
-      username: "",
-      email: "",
-      profile_picture: "",
-      score: "-",
-      level: "-",
-      country: "-",
-      country_flag: "",
-      country_name: "",
-    });
+  const limit = expanded ? 50 : 10;
+  const shown = players.slice(0, limit);
+
+  if (shown.length === 0) {
+    // A real empty state. This used to pad the table to ten rows of "-", which
+    // invented content to fill space.
+    return (
+      <div className="border-t border-rule py-storey-half text-center">
+        <p className="text-body text-ink-muted">No scores here yet.</p>
+        <p className="mt-2 text-body-s text-ink-faint">
+          The first person to play this one takes the top row.
+        </p>
+      </div>
+    );
   }
+
   return (
-    <div className="table-responsive">
-      <table className="table table-hover align-middle leaderboard-table">
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-left">
+        <caption className="sr-only">
+          Players ranked by best score, highest first
+        </caption>
         <thead>
-          <tr>
-            <th style={{ width: 60 }}>Rank</th>
-            <th>Player</th>
-            <th>Score</th>
-            <th>Level</th>
-            <th>Country</th>
+          <tr className="border-b border-rule-strong">
+            {["Rank", "Player", "Score", "Level", "Country"].map((h) => (
+              <th
+                key={h}
+                scope="col"
+                className="font-label px-3 py-3 text-label text-ink-faint"
+              >
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {displayPlayers.slice(0, rowsToShow).map((p, i) => (
-            <tr
-              key={p.id || p.user || `placeholder-${i}`}
-              className={
-                highlightUserId === (p.id || p.user) ? "table-primary" : ""
-              }
-            >
-              <td>
-                <span className="fw-bold">
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
-                </span>
-              </td>
-              <td>
-                <span className="fw-semibold player-name">
-                  {p.profile_picture ? (
-                    <img
-                      src={p.profile_picture}
-                      alt="Profile"
-                      className="player-avatar"
-                    />
-                  ) : (
-                    <span className="player-avatar-fallback">
-                      {(p.username?.[0] || p.email?.[0] || "?").toUpperCase()}
+          {shown.map((p, i) => {
+            const isYou = highlightUserId && highlightUserId === (p.id ?? p.user);
+            return (
+              <tr
+                key={p.id ?? p.user ?? i}
+                className={`border-b border-rule transition-colors duration-hair ${
+                  isYou ? "bg-surface-raised" : "hover:bg-surface"
+                }`}
+              >
+                <td className="px-3 py-3">
+                  <Rank index={i} />
+                </td>
+                <td className="px-3 py-3">
+                  <span className="flex items-center gap-3">
+                    {p.profile_picture ? (
+                      <img
+                        src={p.profile_picture}
+                        alt=""
+                        className="size-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className="flex size-8 items-center justify-center rounded-full border border-rule text-body-s text-ink-muted"
+                      >
+                        {(p.username?.[0] ?? "?").toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-body text-ink">
+                      {p.username ?? "Anonymous"}
                     </span>
-                  )}
-                  {p.username ||
-                    p.email ||
-                    (p.score === "-" ? "-" : "Anonymous")}
-                </span>
-              </td>
-              <td>
-                <span className="fw-bold player-score">{p.score}</span>
-              </td>
-              <td>{p.level}</td>
-              <td>
-                {p.country_flag ? (
-                  <span className="player-country">
-                    <img
-                      src={p.country_flag}
-                      alt={p.country_name || p.country || "Flag"}
-                      className="country-flag"
-                    />
-                    {p.country_name || p.country}
+                    {isYou && (
+                      <span className="font-label text-label text-beam">You</span>
+                    )}
                   </span>
-                ) : (
-                  p.country_name || p.country || "-"
-                )}
-              </td>
-            </tr>
-          ))}
-          <tr
-            className="leaderboard-expand-row"
-            onClick={() => onExpand(!expanded)}
-            style={{ cursor: "pointer" }}
-          >
-            <td colSpan={5} style={{ textAlign: "center" }}>
-              <span className="expand-arrow">{expanded ? "▲" : "▼"}</span>
-            </td>
-          </tr>
+                </td>
+                <td className="tabular px-3 py-3 text-body text-lit" data-figure>
+                  {p.score}
+                </td>
+                <td className="tabular px-3 py-3 text-body text-ink-muted" data-figure>
+                  {p.level}
+                </td>
+                <td className="px-3 py-3 text-body-s text-ink-muted">
+                  {p.country_flag ? (
+                    <span className="flex items-center gap-2">
+                      <img src={p.country_flag} alt="" className="h-3 w-auto" />
+                      {p.country_name ?? p.country}
+                    </span>
+                  ) : (
+                    (p.country_name ?? p.country ?? "—")
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+
+      {players.length > 10 && (
+        <button
+          type="button"
+          onClick={() => onExpand(!expanded)}
+          aria-expanded={expanded}
+          className="mt-4 w-full border-t border-rule py-3 font-label text-label text-ink-muted transition-colors duration-hair hover:text-beam"
+        >
+          {expanded ? "Show fewer" : `Show top ${Math.min(players.length, 50)}`}
+        </button>
+      )}
     </div>
   );
 }
 
 export default function Leaderboard({ user, token }) {
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState("memory");
   const [selectedGame, setSelectedGame] = useState("all");
   const [globalRanks, setGlobalRanks] = useState(false);
@@ -153,254 +175,155 @@ export default function Leaderboard({ user, token }) {
   });
 
   const players = boardQuery.data ?? [];
-  const loading = boardQuery.isPending;
   const userStats = statsQuery.data ?? null;
 
-  const handleCategoryClick = (catKey) => {
-    setSelectedCategory(catKey);
-    setSelectedGame("all");
-    setGlobalRanks(false);
-    setExpanded(false);
-  };
+  const scopeLabel = globalRanks
+    ? "Global"
+    : selectedGame !== "all"
+      ? getGameLabel(selectedCategory, selectedGame)
+      : (categories.find((c) => c.key === selectedCategory)?.label ?? "");
 
-  const handleGameChange = (e) => {
-    setSelectedGame(e.target.value);
+  const selectScope = (next) => {
     setExpanded(false);
+    next();
   };
 
   return (
-    <div className="leaderboard-container">
-      <div className="leaderboard-title">🌟 Global Leaderboard</div>
-      <p className="leaderboard-desc">
-        Celebrate your progress, challenge the world, and see how you stack up
-        in brain training! Every game you play helps you climb higher.
+    <div className="mx-auto max-w-frame px-4 py-storey-half">
+      <h1 className="font-display text-display-l text-lit">Leaderboard</h1>
+      <p className="mt-3 max-w-[54ch] text-body text-ink-muted">
+        Best score per person, per domain. Each domain ranks separately, so
+        strength in one does not carry into another.
       </p>
 
-      {/* Global Ranks button */}
-      <div className="leaderboard-global-btn-row">
+      {/* Scope */}
+      <div className="mt-10 flex flex-wrap gap-2">
         <button
-          className={`leaderboard-global-btn${globalRanks ? " active" : ""}`}
-          onClick={() => {
-            setGlobalRanks(true);
-            setSelectedCategory(null);
-            setSelectedGame("all");
-            setExpanded(false);
-          }}
+          type="button"
+          aria-pressed={globalRanks}
+          onClick={() =>
+            selectScope(() => {
+              setGlobalRanks(true);
+              setSelectedCategory(null);
+              setSelectedGame("all");
+            })
+          }
+          className={`h-9 rounded-hair border px-4 font-label text-label transition-colors duration-hair ${
+            globalRanks
+              ? "border-beam bg-beam text-poche"
+              : "border-rule-strong text-ink-muted hover:border-beam hover:text-beam"
+          }`}
         >
-          🌍 Global Ranks
+          Global
         </button>
+
+        {categories.map((cat) => {
+          const active = !globalRanks && selectedCategory === cat.key;
+          return (
+            <button
+              key={cat.key}
+              type="button"
+              aria-pressed={active}
+              onClick={() =>
+                selectScope(() => {
+                  setSelectedCategory(cat.key);
+                  setSelectedGame("all");
+                  setGlobalRanks(false);
+                })
+              }
+              className={`h-9 rounded-hair border px-4 font-label text-label transition-colors duration-hair ${
+                active
+                  ? "border-beam bg-beam text-poche"
+                  : "border-rule-strong text-ink-muted hover:border-beam hover:text-beam"
+              }`}
+            >
+              {cat.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Category buttons - Always show */}
-      {!categoriesLoading && categories.length > 0 && (
-        <div className="leaderboard-categories-section">
-          <div className="leaderboard-category-row">
-            {enhanceCategories(categories).map((cat) => (
-              <button
-                key={cat.key}
-                className={`leaderboard-category-btn ${
-                  selectedCategory === cat.key && !globalRanks ? "active" : ""
-                }`}
-                onClick={() => handleCategoryClick(cat.key)}
-                aria-pressed={selectedCategory === cat.key && !globalRanks}
-                data-category={cat.key}
-              >
-                <div className="leaderboard-category-btn-icon">
-                  <img src={cat.icon} alt={cat.label} />
-                </div>
-                <div className="leaderboard-category-btn-text">
-                  <span className="leaderboard-category-btn-label">
-                    {cat.label}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+      {/* Game within the category */}
+      {!globalRanks && (
+        <div className="mt-4">
+          <label htmlFor="board-game" className="font-label text-label text-ink-faint">
+            Exercise
+          </label>
+          <select
+            id="board-game"
+            value={selectedGame}
+            onChange={(e) => {
+              setSelectedGame(e.target.value);
+              setExpanded(false);
+            }}
+            className="mt-2 block h-10 rounded-hair border border-rule bg-surface px-3 text-body text-ink focus:border-beam focus:outline-none"
+          >
+            <option value="all">All exercises</option>
+            {selectedCategory &&
+              gamesByCategory[selectedCategory]?.map((game) => (
+                <option key={game.key} value={game.key}>
+                  {game.label}
+                </option>
+              ))}
+          </select>
         </div>
       )}
 
-      {/* Game dropdown */}
-      <div className="leaderboard-game-dropdown-row">
-        <select
-          className="leaderboard-game-dropdown"
-          value={selectedGame}
-          onChange={handleGameChange}
-          disabled={globalRanks}
-        >
-          <option value="all">All Games</option>
-          {selectedCategory &&
-            gamesByCategory[selectedCategory]?.map((game) => (
-              <option key={game.key} value={game.key}>
-                {game.label}
-              </option>
-            ))}
-        </select>
-      </div>
-
+      {/* Your standing */}
       {userStats && (
-        <div className="alert alert-info leaderboard-user-stats">
-          <span role="img" aria-label="user" className="user-emoji">
-            👤
-          </span>
-          <div className="ms-3">
-            <strong>
-              Your Best in{" "}
-              {globalRanks
-                ? "Global"
-                : selectedGame !== "all"
-                ? gamesByCategory[selectedCategory]?.find(
-                    (g) => g.key === selectedGame
-                  )?.label || ""
-                : categories.find((c) => c.key === selectedCategory)?.label ||
-                  ""}
-              :
-            </strong>
-            <div>
-              Level <b>{userStats.level_reached}</b> &nbsp;|&nbsp; Score{" "}
-              <b>{userStats.score}</b>
-            </div>
-          </div>
+        <div className="mt-8 border-l-2 border-beam bg-surface px-5 py-4">
+          <p className="font-label text-label text-ink-muted">
+            Your best in {scopeLabel}
+          </p>
+          <p className="mt-2 text-body text-ink">
+            Level{" "}
+            <span className="tabular text-lit" data-figure>
+              {userStats.level_reached}
+            </span>
+            <span className="mx-3 text-ink-faint">·</span>
+            Score{" "}
+            <span className="tabular text-lit" data-figure>
+              {userStats.score}
+            </span>
+          </p>
         </div>
       )}
 
-      <div className="card shadow-sm mb-4 leaderboard-table-card">
-        <div className="card-body">
-          {loading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border text-primary mb-3" />
-              <div className="loading-text">Loading leaderboard...</div>
-            </div>
-          ) : (
-            <LeaderboardTable
-              players={players}
-              highlightUserId={user && user.id}
-              expanded={expanded}
-              onExpand={setExpanded}
-            />
-          )}
-        </div>
-      </div>
-
-      <div className="mb-4 leaderboard-info-row">
-        <div className="col-md-6 mb-3 leaderboard-info-card">
-          <div className="p-4 h-100">
-            <h4 className="fw-bold leaderboard-info-title">Why Compete?</h4>
-            <ul className="mb-0 leaderboard-info-list">
-              <li>
-                <b>Stay Motivated:</b> Friendly competition keeps you coming
-                back.
-              </li>
-              <li>
-                <b>Track Your Growth:</b> See your improvement over time.
-              </li>
-              <li>
-                <b>Global Community:</b> Join millions training their minds
-                together.
-              </li>
-              <li>
-                <b>Unlock Achievements:</b> Earn badges for top scores and
-                streaks.
-              </li>
-            </ul>
+      {/* Board */}
+      <div className="mt-8">
+        {boardQuery.isPending ? (
+          <p className="py-storey-half text-center text-body text-ink-muted">
+            Loading…
+          </p>
+        ) : boardQuery.error ? (
+          <div className="border-t border-rule py-storey-half text-center">
+            <p className="text-body text-negative">That board did not load.</p>
+            <button
+              type="button"
+              onClick={() => boardQuery.refetch()}
+              className="mt-3 h-9 rounded-hair border border-rule-strong px-4 text-body-s text-ink hover:border-beam hover:text-beam"
+            >
+              Try again
+            </button>
           </div>
-        </div>
-        <div className="col-md-6 mb-3 leaderboard-info-card">
-          <div className="p-4 h-100">
-            <h4 className="fw-bold leaderboard-info-title">
-              How Leaderboards Work
-            </h4>
-            <ul className="mb-0 leaderboard-info-list">
-              <li>
-                <b>Global Ranks:</b> See the top players across all games and
-                categories.
-              </li>
-              <li>
-                <b>Categories:</b> Each skill category has its own leaderboard.
-              </li>
-              <li>
-                <b>Games:</b> Select a specific game to view its leaderboard.
-              </li>
-              <li>
-                <b>Always Accessible:</b> The game dropdown is always visible
-                for quick switching.
-              </li>
-              <li>
-                <b>Fair Play:</b> Only your best score per game is shown.
-              </li>
-              <li>
-                <b>Privacy:</b> You can play as "Anonymous" or set your name.
-              </li>
-              <li>
-                <b>Frequent Updates:</b> Scores refresh in real time.
-              </li>
-            </ul>
-          </div>
-        </div>
+        ) : (
+          <LeaderboardTable
+            players={players}
+            highlightUserId={user?.id}
+            expanded={expanded}
+            onExpand={setExpanded}
+          />
+        )}
       </div>
 
-      {/* Wide scoring details card */}
-      <div className="leaderboard-scoring-details-card">
-        <h4 className="fw-bold leaderboard-scoring-title">
-          How Scores Are Calculated
-        </h4>
-        <ul className="leaderboard-scoring-list">
-          <li>
-            <b>Base Score:</b> Each correct answer gives points. Harder
-            questions and higher levels give more.
-          </li>
-          <li>
-            <b>Streak Multiplier:</b> Consecutive correct answers increase your
-            multiplier (e.g. 2x, 3x, etc).
-          </li>
-          <li>
-            <b>Reaction Speed:</b> Faster answers earn bonus points. The quicker
-            you answer, the higher the bonus.
-          </li>
-          <li>
-            <b>Timer Reduction:</b> As you progress, the time allowed per
-            question decreases, raising the challenge and potential score.
-          </li>
-          <li>
-            <b>Streak Break:</b> A wrong answer resets your streak multiplier
-            and may reduce your bonus.
-          </li>
-          <li>
-            <b>Level Bonus:</b> Completing a level quickly or with a perfect
-            streak gives extra points.
-          </li>
-          <li>
-            <b>XP:</b> Earn XP for every game, which helps you level up and
-            unlock new features.
-          </li>
-        </ul>
-        <div className="leaderboard-scoring-tip">
-          <b>Tip:</b> Play consistently and aim for long streaks to maximize
-          your score!
-        </div>
-      </div>
-
-      <div className="leaderboard-cta-card">
-        <h3 className="fw-bold leaderboard-cta-title">
-          Ready to train your brain and join the leaderboard?
-        </h3>
-        <Link
-          to="/games"
-          className="btn btn-lg btn-primary game-btn px-5 py-3 start-btn-hover leaderboard-cta-btn"
-        >
-          Start Playing Now
-        </Link>
-        <div className="mt-3 text-muted leaderboard-cta-subtext">
-          <small>
-            Every game you play is a step toward a sharper mind and a higher
-            rank!
-          </small>
-        </div>
-      </div>
-
-      <footer className="leaderboard-footer">
-        &copy; {new Date().getFullYear()} Cognitive Games. Empowering minds, one
-        game at a time.
-      </footer>
+      {!token && (
+        <p className="mt-storey-half border-t border-rule pt-6 text-body-s text-ink-muted">
+          <Link to="/signin" className="text-beam underline">
+            Create an account
+          </Link>{" "}
+          to appear on these boards and keep your progress per domain.
+        </p>
+      )}
     </div>
   );
 }
