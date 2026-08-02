@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class CategoriesView(APIView):
-    permission_classes = [IsAuthenticated]
+    # Browsable without an account: the catalogue is public marketing surface.
+    permission_classes = [AllowAny]
 
     def get(self, request):
         counts = dict(
@@ -65,7 +66,7 @@ class GameSubmitView(APIView):
 
 
 class AvailableGamesView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         return Response(list(Game.objects.values('id', 'name', 'category', 'description')))

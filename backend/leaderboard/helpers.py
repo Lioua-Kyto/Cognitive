@@ -3,7 +3,9 @@ from users.models import CustomUser
 DEFAULT_LEADERBOARD_LIMIT = 100
 MAX_LEADERBOARD_LIMIT = 500
 
-_USER_FIELDS = ('id', 'email', 'username', 'profile_picture', 'country', 'experience')
+# Deliberately no email. Leaderboards are browsable without an account, and the
+# address is not needed to render a row — username is the display name.
+_USER_FIELDS = ('id', 'username', 'profile_picture', 'country', 'experience')
 
 
 def leaderboard_limit(request):
@@ -32,7 +34,6 @@ def _user_payload(user, request=None):
 
     return {
         'id': user.id,
-        'email': user.email,
         'username': user.username,
         'profile_picture': profile_picture_url,
         'country': user.country.code if user.country else None,
@@ -46,7 +47,6 @@ def _user_payload(user, request=None):
 def _missing_payload(user_id):
     return {
         'id': user_id,
-        'email': None,
         'username': None,
         'profile_picture': None,
         'country': None,

@@ -137,7 +137,7 @@ export default function Leaderboard({ user, token }) {
       if (scope.kind === "game") return GameLeaderboard.fetch(scope.name, token);
       return CategoryLeaderboard.fetch(scope.name, token);
     },
-    enabled: Boolean(token),
+    // The boards are public; only the "your standing" panel below needs a token.
   });
 
   const statsQuery = useQuery({

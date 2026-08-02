@@ -26,16 +26,17 @@ export const FALLBACK_CATEGORIES = [
 export default function useCategories() {
   const { token } = useContext(AuthContext);
 
+  // The catalogue is public, so this runs signed out too — a visitor deciding
+  // whether to sign up sees the real categories and game counts.
   const query = useQuery({
     queryKey: queryKeys.categories(),
     queryFn: () => fetchCategories(token),
-    enabled: Boolean(token),
     staleTime: 5 * 60_000,
   });
 
   return {
     categories: query.data?.length ? query.data : FALLBACK_CATEGORIES,
-    loading: query.isPending && Boolean(token),
+    loading: query.isPending,
     error: query.error?.message ?? null,
     refetch: query.refetch,
   };

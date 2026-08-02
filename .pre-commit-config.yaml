@@ -18,6 +18,5 @@ repos:
       - id: check-json
       - id: check-added-large-files
         args: [--maxkb=1024]
-      # The one that would have caught the plaintext Postgres password.
       - id: detect-private-key
       - id: check-merge-conflict

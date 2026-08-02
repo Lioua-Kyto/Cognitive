@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.db.models import Avg, Count, Sum
 from django.db.models.functions import TruncDate
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -27,7 +27,7 @@ def _with_user_info(rows, request):
 
 # GLOBAL leaderboard: sum all best scores for each user across all games/categories
 class GlobalLeaderboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         scores = (
@@ -39,7 +39,7 @@ class GlobalLeaderboardView(APIView):
 
 # CATEGORY leaderboard: sum all best scores for each user in a category
 class CategoryLeaderboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, category_name):
         scores = (
@@ -52,7 +52,7 @@ class CategoryLeaderboardView(APIView):
 
 # GAME leaderboard: best score for each user in a specific game
 class GameLeaderboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, game_name):
         # BestScore is unique per (user, game), so one row per user already.

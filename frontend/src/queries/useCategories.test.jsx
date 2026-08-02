@@ -28,16 +28,20 @@ function wrapper(token) {
 describe("useCategories", () => {
   beforeEach(() => fetchCategories.mockReset());
 
-  it("does not call the API without a token", () => {
+  it("fetches signed out, because the catalogue is public", async () => {
+    // Someone deciding whether to sign up sees the real categories and counts.
+    const live = [{ key: "memory", label: "Memory", game_count: 5 }];
+    fetchCategories.mockResolvedValue(live);
+
     const { result } = renderHook(() => useCategories(), {
       wrapper: wrapper(null),
     });
-    expect(fetchCategories).not.toHaveBeenCalled();
-    expect(result.current.categories).toEqual(FALLBACK_CATEGORIES);
-    expect(result.current.loading).toBe(false);
+
+    await waitFor(() => expect(result.current.categories).toEqual(live));
+    expect(fetchCategories).toHaveBeenCalledWith(null);
   });
 
-  it("fetches once a token is present", async () => {
+  it("passes the token through when signed in", async () => {
     // Regression: the hook took the token as an argument and GameCategories
     // called it with none, so the API was never hit and the fallback was
     // permanent.

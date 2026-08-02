@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { useContext, useState, lazy, Suspense } from "react";
+import { useContext, lazy, Suspense } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createQueryClient } from "./queries/client.js";
 import { AuthProvider, AuthContext } from "./context/AuthContext.jsx";
@@ -7,18 +7,17 @@ import { LevelUpProvider } from "./context/LevelUpContext.jsx";
 import { SocialProvider } from "./context/SocialContext.jsx";
 import { useLevelTracker } from "./hooks/useLevelTracker.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
-import LoginForm from "./components/Auth/LoginForm.jsx";
-import RegisterForm from "./components/Auth/RegisterForm.jsx";
+import RequireAuth from "./components/Auth/RequireAuth.jsx";
 import Navbar from "./components/Layout/Navbar.jsx";
 import Footer from "./components/Layout/Footer.jsx";
 import AchievementNotification from "./components/AchievementNotification.jsx";
 import LevelUpNotification from "./components/LevelUpNotification.jsx";
-import loginImage from "./assets/Pictures/LoginImage.jpeg";
 
 // Route-level code splitting. GameScreen in particular statically pulled in all
 // 25 game components and their audio, so every visitor downloaded the whole
 // catalogue to reach the home page.
 const Home = lazy(() => import("./pages/Home.jsx"));
+const SignIn = lazy(() => import("./pages/SignIn.jsx"));
 const GameCategories = lazy(() => import("./pages/GameCategories.jsx"));
 const GameList = lazy(() => import("./pages/GameList.jsx"));
 const GameScreen = lazy(() => import("./pages/GameScreen.jsx"));
@@ -38,7 +37,6 @@ function RouteFallback() {
 
 function MainApp() {
   const { token, user, isLoading } = useContext(AuthContext);
-  const [showRegister, setShowRegister] = useState(false);
 
   // Initialize level tracking
   useLevelTracker();
@@ -52,42 +50,50 @@ function MainApp() {
     );
   }
 
-  if (!token)
-    return (
-      <div className="auth-layout">
-        <div className="auth-form-section">
-          {showRegister ? (
-            <RegisterForm onSwitchToLogin={() => setShowRegister(false)} />
-          ) : (
-            <LoginForm onSwitchToRegister={() => setShowRegister(true)} />
-          )}
-        </div>
-        <div className="auth-image-section">
-          <img src={loginImage} alt="" className="auth-image" />
-        </div>
-      </div>
-    );
-
   return (
     <div className="app-container">
       <Navbar />
       <main className="main-content scrollable-content">
         <Suspense fallback={<RouteFallback />}>
           <Routes>
+            {/* Public: the marketing surface and the whole catalogue. Someone
+                deciding whether to sign up needs to see what they would get. */}
             <Route path="/" element={<Home />} />
+            <Route path="/signin" element={<SignIn />} />
             <Route path="/games" element={<GameCategories />} />
             <Route path="/games/:category" element={<GameList />} />
-            <Route
-              path="/games/:category/:game"
-              element={<GameScreen token={token} />}
-            />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:username" element={<ProfileVisit />} />
-            <Route path="/social" element={<Social />} />
             <Route
               path="/leaderboard"
               element={<Leaderboard user={user} token={token} />}
             />
+            <Route path="/profile/:username" element={<ProfileVisit />} />
+
+            {/* Playing writes a score, so it needs an account. */}
+            <Route
+              path="/games/:category/:game"
+              element={
+                <RequireAuth reason="Playing records your score and progress, so it needs an account.">
+                  <GameScreen token={token} />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <Profile />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/social"
+              element={
+                <RequireAuth reason="Friends, presence and chat need an account.">
+                  <Social />
+                </RequireAuth>
+              }
+            />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
