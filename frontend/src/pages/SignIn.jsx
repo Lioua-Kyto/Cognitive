@@ -20,16 +20,16 @@ export default function SignIn() {
   if (token) return <Navigate to={location.state?.from ?? "/"} replace />;
 
   return (
-    <div className="auth-layout">
-      <div className="auth-form-section">
+    <div className="mx-auto grid max-w-page gap-storey px-4 py-storey-half lg:grid-cols-2 lg:items-center">
+      <div className="flex justify-center lg:justify-start">
         {showRegister ? (
           <RegisterForm onSwitchToLogin={() => setShowRegister(false)} />
         ) : (
           <LoginForm onSwitchToRegister={() => setShowRegister(true)} />
         )}
       </div>
-      <div className="auth-image-section">
-        <img src={loginImage} alt="" className="auth-image" />
+      <div className="hidden overflow-hidden rounded-room border border-rule lg:block">
+        <img src={loginImage} alt="" className="h-full w-full object-cover" />
       </div>
     </div>
   );

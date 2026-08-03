@@ -81,7 +81,7 @@ export default function GameCategories() {
               <img src={cat.icon} alt="" />
             </div>
             <div className="category-card-content">
-              <h3>{cat.label}</h3>
+              <h2 className="text-heading-s">{cat.label}</h2>
               <div className="category-card-desc">{cat.desc}</div>
               <div className="category-card-science">{cat.science}</div>
             </div>

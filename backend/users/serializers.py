@@ -9,7 +9,9 @@ class UserRegistrationSerializer(CountryFieldMixin, serializers.ModelSerializer)
     password1 = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True, min_length=8)
     country = serializers.CharField(required=True)
-    profile_picture = serializers.ImageField(required=True)
+    # Optional at signup. Requiring a photo upload before someone can create an
+    # account is friction with no product reason behind it.
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = CustomUser

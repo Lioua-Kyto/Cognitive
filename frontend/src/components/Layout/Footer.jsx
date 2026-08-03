@@ -1,25 +1,24 @@
-import { Link } from "react-router-dom";
+const REPO = "https://github.com/Lioua-Kyto/Cognitive";
 
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-inner">
-        <span>
-          &copy; {new Date().getFullYear()} Cognitive Games | Your daily brain
-          workout
-        </span>
-        <span className="footer-links">
-          <Link to="/privacy">Privacy</Link>
-          <Link to="/terms">Terms</Link>
-          <Link to="/about">About Us</Link>
-          <a
-            href="https://github.com/your-repo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
-        </span>
+    <footer className="border-t border-rule bg-ground">
+      <div className="mx-auto flex max-w-frame flex-col gap-3 px-4 py-8 text-body-s text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          &copy; {new Date().getFullYear()} Cognitive — seven domains, measured
+          separately.
+        </p>
+        {/* Privacy, Terms and About linked to routes that never existed and now
+            hit the 404 page. They come back when there is something real behind
+            them; a policy is not something to invent. */}
+        <a
+          href={REPO}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="transition-colors duration-hair hover:text-beam"
+        >
+          Source on GitHub
+        </a>
       </div>
     </footer>
   );

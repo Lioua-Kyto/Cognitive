@@ -410,7 +410,9 @@ def get_user_category_ranks(request, user_id):
 
 class CountryListView(APIView):
     """Returns the list of available countries from django_countries"""
-    permission_classes = [permissions.IsAuthenticated]
+    # Public: the registration form needs it before an account exists. It is a
+    # static ISO list, not user data.
+    permission_classes = [permissions.AllowAny]
     
     def get(self, request):
         country_list = [{"code": code, "name": name} for code, name in list(countries)]
