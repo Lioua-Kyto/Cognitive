@@ -25,7 +25,6 @@
 @import "../components/Navbar/SocialSidebar.css" layer(legacy);
 @import "../components/Styles/UserProfileModal.css" layer(legacy);
 @import "../pages/Styles/Dashboard.css" layer(legacy);
-@import "../pages/Styles/GameCategories.css" layer(legacy);
 @import "../pages/Styles/Profile.css" layer(legacy);
 @import "../pages/Styles/ProfileVisit.css" layer(legacy);
 @import "../pages/Styles/SocialModern.css" layer(legacy);

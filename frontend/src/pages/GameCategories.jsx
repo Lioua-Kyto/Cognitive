@@ -13,8 +13,8 @@ export default function GameCategories() {
 
   if (categoriesLoading) {
     return (
-      <div className="game-categories-container">
-        <div className="loading-text">Loading categories...</div>
+      <div className="mx-auto max-w-frame px-4 py-storey-half">
+        <p className="text-body text-ink-muted">Loading domains…</p>
       </div>
     );
   }
@@ -40,7 +40,7 @@ export default function GameCategories() {
   });
 
   return (
-    <div className="game-categories-container">
+    <div className="py-storey-half">
       <section
         aria-labelledby="section-heading"
         className="mx-auto mb-storey w-full max-w-frame px-4"
@@ -63,37 +63,40 @@ export default function GameCategories() {
         />
       </section>
 
-      <div className="game-categories-title">Choose Your Training Path</div>
-      <div className="game-categories-subtitle">
-        Each category targets a different aspect of your cognitive abilities.
-        <br />
-        Explore and discover the games that best fit your goals!
-      </div>
-      <div className="game-categories-stack">
-        {enhancedCategories.map((cat) => (
-          <Link
-            to={`/games/${cat.key}`}
-            className="category-card"
-            data-category={cat.key}
-            key={cat.key}
-          >
-            <div className="category-card-icon">
-              <img src={cat.icon} alt="" />
-            </div>
-            <div className="category-card-content">
-              <h2 className="text-heading-s">{cat.label}</h2>
-              <div className="category-card-desc">{cat.desc}</div>
-              <div className="category-card-science">{cat.science}</div>
-            </div>
-          </Link>
-        ))}
-      </div>
-      <div className="game-categories-note">
-        <small>
-          Not sure where to start? Try <b>Memory</b> for a classic challenge, or{" "}
-          <b>Attention</b> to boost your focus!
-        </small>
-      </div>
+      <section
+        aria-labelledby="domains-heading"
+        className="mx-auto w-full max-w-frame px-4"
+      >
+        <h2 id="domains-heading" className="font-display text-heading-l text-lit">
+          Pick a domain
+        </h2>
+        <p className="mt-3 max-w-[54ch] text-body text-ink-muted">
+          Each trains something specific. Start where you feel the gap — or
+          where you are curious.
+        </p>
+
+        <ul className="mt-10 grid gap-px overflow-hidden rounded-room bg-rule sm:grid-cols-2 lg:grid-cols-3">
+          {enhancedCategories.map((cat) => (
+            <li key={cat.key}>
+              <Link
+                to={`/games/${cat.key}`}
+                className="group flex h-full flex-col gap-3 bg-surface p-6 transition-colors duration-hair hover:bg-surface-raised"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="text-heading-s font-semibold text-lit group-hover:text-beam">
+                    {cat.label}
+                  </h3>
+                  <img src={cat.icon} alt="" className="size-8 opacity-70" />
+                </div>
+                <p className="text-body-s text-ink">{cat.desc}</p>
+                <p className="mt-auto pt-3 text-body-s text-ink-faint">
+                  {cat.science}
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
