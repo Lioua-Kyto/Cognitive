@@ -28,7 +28,7 @@ const STEPS = [
 export default function Home() {
   const { token } = useContext(AuthContext);
   const { categories } = useCategories();
-  const { ref, progress, pinned } = useScrollBeam({ distance: 2 });
+  const { ref, progress } = useScrollBeam({ distance: 2 });
 
   const enhanced = enhanceCategories(categories);
 
@@ -38,8 +38,10 @@ export default function Home() {
   const rooms = enhanced.map((cat, i) => ({
     key: cat.key,
     label: cat.label,
-    // Not pinned means reduced motion: show every room lit, nothing to reveal.
-    lit: !pinned || i <= reached,
+    // The reveal runs in both motion modes; reduced motion changes how it moves,
+    // never whether it happens. The first room is lit at progress 0 so the
+    // drawing never reads as empty.
+    lit: i <= reached,
     strength: 0.35 + ((i * 37) % 55) / 100,
     value: cat.game_count ? `${cat.game_count}` : "—",
   }));

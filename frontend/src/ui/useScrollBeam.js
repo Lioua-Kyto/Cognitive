@@ -1,62 +1,79 @@
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { NOON } from "./useSolarPosition.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * Pins a container and maps scroll progress onto the sun's arc.
+ * Maps scroll position onto the sun's arc across the seven rooms.
  *
- * The signature interaction: one scroll gesture walks the beam across the seven
- * rooms, lighting each in turn, so a visitor learns the whole product without
- * reading anything.
+ * The signature interaction: scrolling walks the beam across the domains,
+ * lighting each in turn, so a visitor learns the product without reading.
  *
- * Under prefers-reduced-motion nothing is pinned and nothing scrubs — the beam
- * sits at noon and every room is shown in its true state. That is this world's
- * documented still state, so the reduced-motion page is complete rather than a
- * stripped-down version of the real one.
+ * On prefers-reduced-motion the reveal still happens. That flag is about
+ * unexpected, non-user-driven motion — parallax, auto-playing sweeps, things
+ * that move while you sit still. A scroll-linked reveal is direct manipulation:
+ * you move, it moves, and stopping means it stops. What reduced motion turns off
+ * here is the *pin* (which makes the page feel stuck) and the scrub smoothing
+ * (which keeps moving after you do). The content is identical either way.
  *
- * Returns { ref, progress, pinned }. Attach ref to the element to pin.
+ * Returns { ref, progress, pinned }.
  */
 export function useScrollBeam({ distance = 2 } = {}) {
   const ref = useRef(null);
-  const [progress, setProgress] = useState(NOON);
+  const [progress, setProgress] = useState(0);
   const [pinned, setPinned] = useState(false);
 
   useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (media.matches || !ref.current) {
-      setProgress(NOON);
-      setPinned(false);
-      return;
+    let trigger = null;
+
+    const build = () => {
+      trigger?.kill();
+      const calm = media.matches;
+      setPinned(!calm);
+
+      trigger = ScrollTrigger.create({
+        trigger: element,
+        start: "top top",
+        // Pinned: the section holds while the sun crosses it. Unpinned: the beam
+        // tracks the section's own travel through the viewport instead.
+        end: calm ? "bottom top" : `+=${distance * 100}%`,
+        pin: !calm,
+        pinSpacing: !calm,
+        // No `scrub` here on purpose. Scrub ties a *tween* to the scrollbar;
+        // this trigger has no animation attached — it drives React state — and
+        // setting scrub without one stops onUpdate reporting progress.
+        onUpdate: (self) => setProgress(self.progress),
+      });
+    };
+
+    build();
+    if (import.meta.env.DEV) {
+      window.__beamDebug = () => ({
+        triggers: ScrollTrigger.getAll().length,
+        progress: trigger?.progress,
+        start: trigger?.start,
+        end: trigger?.end,
+        isActive: trigger?.isActive,
+        scrollerIsWindow: ScrollTrigger.getAll()[0]?.scroller === window,
+      });
     }
+    media.addEventListener("change", build);
 
-    setPinned(true);
-
-    // Progress is written to state rather than tweened onto the DOM because the
-    // rooms are React-rendered; the only thing GSAP animates directly is nothing,
-    // which keeps every frame to a fill-opacity change on already-composited SVG.
-    // The window never scrolls: layout.css sets overflow:hidden on html, body
-    // and .app-container, and .scrollable-content is the real scroll container.
-    // ScrollTrigger defaults to the window, so without this it silently never
-    // fires — which is why no scroll animation appeared at all.
-    const scroller = ref.current.closest(".scrollable-content") ?? undefined;
-
-    const trigger = ScrollTrigger.create({
-      trigger: ref.current,
-      scroller,
-      start: "top top",
-      end: `+=${distance * 100}%`,
-      pin: true,
-      pinSpacing: true,
-      scrub: 0.4,
-      onUpdate: (self) => setProgress(self.progress),
-      onRefreshInit: () => setProgress(0),
-    });
+    // Fonts and lazily-rendered content settle after mount and change the
+    // measurements ScrollTrigger cached.
+    const refresh = () => ScrollTrigger.refresh();
+    const settle = setTimeout(refresh, 300);
+    document.fonts?.ready.then(refresh);
 
     return () => {
-      trigger.kill();
+      clearTimeout(settle);
+      media.removeEventListener("change", build);
+      trigger?.kill();
       setPinned(false);
     };
   }, [distance]);

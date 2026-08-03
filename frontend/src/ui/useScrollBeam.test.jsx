@@ -1,13 +1,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { act, render, renderHook } from "@testing-library/react";
-import { NOON } from "./useSolarPosition.js";
+import { act, render } from "@testing-library/react";
 
 const created = vi.hoisted(() => []);
 const killed = vi.hoisted(() => ({ count: 0 }));
+const refreshed = vi.hoisted(() => ({ count: 0 }));
 
-vi.mock("gsap", () => ({
-  gsap: { registerPlugin: vi.fn() },
-}));
+vi.mock("gsap", () => ({ gsap: { registerPlugin: vi.fn() } }));
 
 vi.mock("gsap/ScrollTrigger", () => ({
   ScrollTrigger: {
@@ -18,6 +16,9 @@ vi.mock("gsap/ScrollTrigger", () => ({
           killed.count += 1;
         },
       };
+    },
+    refresh: () => {
+      refreshed.count += 1;
     },
   },
 }));
@@ -36,67 +37,97 @@ let useScrollBeam;
 beforeEach(async () => {
   created.length = 0;
   killed.count = 0;
+  refreshed.count = 0;
   vi.resetModules();
   ({ useScrollBeam } = await import("./useScrollBeam.js"));
 });
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("useScrollBeam under prefers-reduced-motion", () => {
-  it("pins nothing and holds the beam at noon", () => {
-    setReducedMotion(true);
-    const { result } = renderHook(() => useScrollBeam());
+// Renders a real component so React attaches the ref during commit, before
+// effects run — which is the ordering the hook relies on.
+function mount() {
+  const seen = { current: null };
 
-    // The still noon state: complete, not degraded.
-    expect(result.current.progress).toBe(NOON);
-    expect(result.current.pinned).toBe(false);
-    expect(created).toHaveLength(0);
-  });
-});
-
-describe("useScrollBeam with motion allowed", () => {
-  // Renders a real component so React attaches the ref during commit, before
-  // effects run — which is the ordering the hook relies on.
-  function mountWithElement() {
-    const seen = { current: null };
-
-    function Probe() {
-      const beam = useScrollBeam({ distance: 2 });
-      seen.current = beam;
-      return <div ref={beam.ref} />;
-    }
-
-    const view = render(<Probe />);
-    return { ...view, result: seen };
+  function Probe() {
+    const beam = useScrollBeam({ distance: 2 });
+    seen.current = beam;
+    return <div ref={beam.ref} />;
   }
 
-  it("creates a pinned, scrubbed ScrollTrigger over the requested distance", () => {
+  const view = render(<Probe />);
+  return { ...view, result: seen };
+}
+
+describe("useScrollBeam", () => {
+  it("creates a pinned trigger over the requested distance by default", () => {
     setReducedMotion(false);
-    mountWithElement();
+    mount();
 
     expect(created).toHaveLength(1);
-    const config = created[0];
-    expect(config.pin).toBe(true);
-    expect(config.scrub).toBeTruthy();
-    expect(config.start).toBe("top top");
-    expect(config.end).toBe("+=200%");
+    expect(created[0]).toMatchObject({
+      pin: true,
+      pinSpacing: true,
+      start: "top top",
+      end: "+=200%",
+    });
   });
 
-  it("maps ScrollTrigger progress straight onto the beam", () => {
+  it("never sets scrub, which would stop onUpdate reporting progress", () => {
+    // scrub ties a tween to the scrollbar. This trigger has no animation — it
+    // drives React state through onUpdate — and setting scrub without one left
+    // progress pinned at 0.
     setReducedMotion(false);
-    const { result } = mountWithElement();
+    mount();
+    expect(created[0].scrub).toBeUndefined();
+  });
 
-    // ScrollTrigger drives this from outside React, so the state update needs
-    // flushing before it can be read.
-    act(() => created[0].onUpdate({ progress: 0.75 }));
-    expect(result.current.progress).toBeCloseTo(0.75, 5);
+  it("still runs the reveal under reduced motion, without pinning it", () => {
+    // The flag targets motion the user did not ask for. A scroll-linked reveal
+    // is direct manipulation, so it stays — what goes is the pin.
+    setReducedMotion(true);
+    const { result } = mount();
+
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ pin: false, end: "bottom top" });
+    expect(created[0].scrub).toBeUndefined();
+    expect(result.current.pinned).toBe(false);
+  });
+
+  it("maps trigger progress onto the beam in both modes", () => {
+    for (const calm of [false, true]) {
+      created.length = 0;
+      setReducedMotion(calm);
+      const { result, unmount } = mount();
+
+      act(() => created[0].onUpdate({ progress: 0.75 }));
+      expect(result.current.progress).toBeCloseTo(0.75, 5);
+      unmount();
+    }
+  });
+
+  it("uses the window scroller, not a nested container", () => {
+    // The legacy shell scrolled an inner div, which left ScrollTrigger watching
+    // a window that never moved. The document scrolls now.
+    setReducedMotion(false);
+    mount();
+    expect(created[0].scroller).toBeUndefined();
+  });
+
+  it("refreshes once layout settles", async () => {
+    setReducedMotion(false);
+    mount();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 350));
+    });
+    expect(refreshed.count).toBeGreaterThan(0);
   });
 
   it("kills the trigger on unmount so a route change leaves no pin behind", () => {
     setReducedMotion(false);
-    const { unmount } = mountWithElement();
+    const { unmount } = mount();
 
     unmount();
-    expect(killed.count).toBe(1);
+    expect(killed.count).toBeGreaterThan(0);
   });
 });

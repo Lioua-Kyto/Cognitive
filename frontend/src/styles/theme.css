@@ -176,10 +176,49 @@ html {
   color-scheme: light;
 }
 
-/* The legacy shell paints its own background over the body — .main-content sets
+/*
+ * Undo the legacy app shell.
+ *
+ * layout.css sets overflow:hidden and a fixed 100vh on html, body and
+ * .app-container, then scrolls an inner .scrollable-content div instead. That
+ * pattern breaks everything scroll-driven: the document never scrolls, so
+ * ScrollTrigger's default scroller is dead, 100vh stops meaning the viewport,
+ * and pinning fights the nested scroll context. Letting the document scroll —
+ * what every ordinary site does — is what makes scroll animation work at all.
+ */
+html,
+body {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/* #root carried height:100% + overflow:hidden. Once body is auto-height that
+   percentage resolves to 0, and a zero-height parent with overflow:hidden clips
+   the entire app — which is why the document reported no scrollable content
+   while .main-content was 2288px tall. */
+#root {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.app-container {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.main-content,
+.scrollable-content {
+  height: auto;
+  overflow: visible;
+}
+
+/* The shell also paints its own background over the body — .main-content sets
    var(--color-background), the old cream — so setting body alone left every
-   redesigned surface as light text on a light ground. These three carry the app
-   shell and have to take the token ground with it. */
+   redesigned surface as light text on a light ground. */
 .app-container,
 .main-content,
 .scrollable-content {
