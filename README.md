@@ -112,6 +112,9 @@ docker compose exec backend python manage.py populate_achievements_badges
 
 ## Documentation
 
+- [CLAUDE.md](CLAUDE.md) — start here when picking the project up: which skills
+  to load, the verification method, the traps that have already cost time, and
+  the exact remaining work
 - [docs/architecture.md](docs/architecture.md) — system, submission path and ER
   diagrams, plus the conventions that are not obvious from any single file
 - [docs/design-direction.md](docs/design-direction.md) — the design system and the
