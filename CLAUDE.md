@@ -60,27 +60,51 @@ project mid-session; check `document.title` before trusting any result from it.
 
 ---
 
-## Traps that have already cost time
+## Traps
 
-- **`docker compose restart` does not re-read `env_file`.** It reuses the
-  container's baked config. Use `docker compose up -d --force-recreate backend`
-  after editing `backend/.env`.
-- **Unlayered CSS beats `@layer` CSS**, whatever the import order. This is why
-  Bootstrap had to go before any token could take effect, and why the legacy
-  stylesheets live in `@layer legacy` (`src/styles/legacy.css`) so utilities can
-  win. The element defaults in `theme.css` are deliberately outside any layer.
-- **The legacy shell fought scroll.** `layout.css` sets `overflow:hidden` and
-  fixed `100vh` on `html`, `body`, `#root` and `.app-container`. `theme.css`
-  overrides all of them so the document scrolls normally. Do not reintroduce a
-  nested scroll container; ScrollTrigger and `100vh` both break inside one.
+Most of these are now guarded rather than remembered. Read this section for the
+*why*; trust the guard to catch the *what*.
+
+### Guarded — a test or a command fails if these come back
+
+- **The legacy shell fought scroll.** `layout.css` sets `overflow:hidden` and a
+  fixed `100vh` on `html`, `body`, `#root` and `.app-container`, scrolling an
+  inner div instead. Nothing scroll-driven can work in that: ScrollTrigger's
+  default scroller never moves and `100vh` stops meaning the viewport.
+  `theme.css` overrides it. → `src/styles/theme.test.js`
+- **The shell paints its own background.** `.main-content` sets the old cream, so
+  theming `body` alone leaves every redesigned surface as light text on a light
+  ground. → `src/styles/theme.test.js`
+- **Unlayered CSS beats `@layer` CSS**, whatever the import order. Why Bootstrap
+  had to go before any token could take effect, and why the legacy sheets are
+  wrapped in `layer(legacy)` declared *before* Tailwind's layers. The element
+  defaults in `theme.css` are deliberately outside any layer. →
+  `src/styles/theme.test.js`
 - **`scrub` needs a tween.** A ScrollTrigger with no animation that drives React
-  state through `onUpdate` must not set `scrub`, or progress stays at 0.
+  state through `onUpdate` must not set `scrub`, or progress stays pinned at 0.
+  → `src/ui/useScrollBeam.test.jsx`
+- **`docker compose restart` does not re-read `env_file`** — it reuses the
+  container's baked config, so `.env` edits appear to do nothing. → use
+  `make up`, which always recreates. `make restart` is an alias for it, so
+  reaching for the wrong verb still does the right thing.
+
+Two of these disappear entirely when Phase 3 finishes: once `layout.css` and the
+rest of `legacy.css` are deleted, there is no shell to override and no unlayered
+CSS to lose to. `theme.test.js` asserts `layout.css` still contains
+`overflow:hidden`, so it will tell you when that day comes and the overrides can
+go too.
+
+### Not guardable — judgement, not mechanism
+
 - **In an agent browser pane, `requestAnimationFrame` can fire 0 times** because
   the pane is not compositing. GSAP's ticker is rAF-driven, so scroll animation
-  cannot be verified there at all. Ask the user to run `window.__beamDebug()`
-  (dev only) and report `progress` at top, middle and bottom of the page.
+  cannot be verified there *at all* — static checks will pass while nothing
+  moves. Ask the user to run `window.__beamDebug()` (dev only) and report
+  `progress` at the top, middle and bottom of the page.
 - **`prefers-reduced-motion` is not an off switch for scroll-linked reveals.** It
-  targets motion the user did not initiate. Drop the pin, keep the reveal.
+  targets motion the user did not initiate. A scroll reveal is direct
+  manipulation: you move, it moves; you stop, it stops. Drop the pin, keep the
+  reveal. This one is a design call each time, not a rule a test can hold.
 
 ---
 
