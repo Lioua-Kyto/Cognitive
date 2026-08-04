@@ -1,5 +1,5 @@
 # Wraps the commands whose correct form is not the obvious one.
-.PHONY: up down restart logs shell test lint verify seed
+.PHONY: up down restart logs shell test lint verify seed demo
 
 # Always recreates. `docker compose restart` reuses the container's baked config
 # and does NOT re-read backend/.env, which has silently swallowed config changes
@@ -22,6 +22,13 @@ shell:
 seed:
 	docker compose exec backend python manage.py populate_games
 	docker compose exec backend python manage.py populate_achievements_badges
+
+# Demo account with friends, chat history and months of results. Social, Profile
+# and Dashboard render nothing without it. Prints the sign-in details and a
+# ready-made token. Refuses to run unless DEBUG is on. Add ARGS="--reset" to
+# rebuild the data from scratch.
+demo: seed
+	docker compose exec backend python manage.py seed_demo $(ARGS)
 
 test:
 	docker compose exec backend pytest
