@@ -10,7 +10,14 @@ import { useId, useRef } from "react";
  * Automatic activation — moving focus selects — which is the expected behaviour
  * when panels are already loaded.
  */
-export default function Tabs({ label, tabs, active, onChange, className = "" }) {
+export default function Tabs({
+  label,
+  tabs,
+  active,
+  onChange,
+  className = "",
+  panelClassName = "",
+}) {
   const baseId = useId();
   const stripRef = useRef(null);
 
@@ -84,6 +91,7 @@ export default function Tabs({ label, tabs, active, onChange, className = "" }) 
         role="tabpanel"
         aria-labelledby={tabId(active)}
         tabIndex={0}
+        className={panelClassName}
       >
         {current?.content}
       </div>

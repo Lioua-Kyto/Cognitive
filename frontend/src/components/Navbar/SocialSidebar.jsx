@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSocial } from "../../context/SocialContext";
 import { useNotifications } from "../../context/NotificationContext";
+import Avatar from "../../ui/Avatar.jsx";
 import Button from "../../ui/Button.jsx";
 import Sheet from "../../ui/Sheet.jsx";
 import Tabs from "../../ui/Tabs.jsx";
@@ -10,33 +11,6 @@ const formatTime = (timestamp) =>
     hour: "2-digit",
     minute: "2-digit",
   });
-
-function Avatar({ name, src, status }) {
-  return (
-    <div className="relative shrink-0">
-      {src ? (
-        <img
-          src={src}
-          alt=""
-          className="size-9 rounded-room border border-rule object-cover"
-        />
-      ) : (
-        <div className="flex size-9 items-center justify-center rounded-room border border-rule bg-surface-raised text-body-s text-ink-muted">
-          {name.charAt(0).toUpperCase()}
-        </div>
-      )}
-      {status && (
-        <span
-          role="img"
-          aria-label={status === "online" ? "Online" : "Offline"}
-          className={`absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-surface ${
-            status === "online" ? "bg-positive" : "bg-shadow"
-          }`}
-        />
-      )}
-    </div>
-  );
-}
 
 function EmptyState({ title, body, action }) {
   return (

@@ -7,14 +7,9 @@ import { useSocial } from "../context/SocialContext";
 import { AuthContext } from "../context/AuthContext";
 import { profileAPI } from "../api/profile.jsx";
 import { queryKeys } from "../queries/keys.js";
+import Avatar from "../ui/Avatar.jsx";
 import Button from "../ui/Button.jsx";
 import Dialog from "../ui/Dialog.jsx";
-
-const ensureAbsoluteUrl = (url) => {
-  if (!url) return "";
-  if (url.startsWith("http")) return url;
-  return `${API_ORIGIN}${url.startsWith("/") ? "" : "/"}${url}`;
-};
 
 const COUNTRY_CODES = {
   algeria: "dz",
@@ -134,27 +129,15 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
   return (
     <Dialog open onClose={onClose} title={name}>
       <div className="flex items-start gap-4">
-        <div className="relative shrink-0">
-          {picture ? (
-            <img
-              src={ensureAbsoluteUrl(picture)}
-              alt=""
-              className="size-16 rounded-room border border-rule object-cover"
-            />
-          ) : (
-            <div className="flex size-16 items-center justify-center rounded-room border border-rule bg-surface text-heading-s text-ink-muted">
-              {name[0].toUpperCase()}
-            </div>
-          )}
-          <span
-            className={`absolute -right-1 -bottom-1 size-3 rounded-full border-2 border-surface-raised ${
-              isOnline ? "bg-positive" : "bg-shadow"
-            }`}
-            // The dot alone carried the whole online/offline distinction.
-            role="img"
-            aria-label={isOnline ? "Online" : "Offline"}
-          />
-        </div>
+        <Avatar
+          name={name}
+          src={picture}
+          size="lg"
+          // The dot alone carried the whole online/offline distinction; Avatar
+          // labels it.
+          status={isOnline ? "online" : "offline"}
+          ringClass="border-surface-raised"
+        />
 
         <div className="min-w-0 flex-1">
           {countryName && (
