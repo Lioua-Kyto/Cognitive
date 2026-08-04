@@ -131,3 +131,22 @@ button,
   background: #fef9c3 !important;
   box-shadow: 0 2px 8px #6366f122;
 }
+
+/* Carried over from Profile.css, which WordGrid was borrowing it from. Dies
+   with the phase 4 game-shell rewrite. */
+.form-control {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--input-radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  color: var(--color-text);
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
+}
