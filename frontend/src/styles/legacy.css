@@ -11,8 +11,6 @@
  */
 
 @import "../layout.css" layer(legacy);
-@import "../components/AchievementNotification.css" layer(legacy);
-@import "../components/AchievementTooltip.css" layer(legacy);
 @import "../components/Dashboard/PlayStreak.css" layer(legacy);
 @import "../components/Games/Layout/Styles/GameHeader.css" layer(legacy);
 @import "../components/Games/Layout/Styles/GameHelpModal.css" layer(legacy);
@@ -21,7 +19,6 @@
 @import "../components/Games/Layout/Styles/GamePauseModal.css" layer(legacy);
 @import "../components/Games/Layout/Styles/GameResultPopup.css" layer(legacy);
 @import "../components/Games/Styles/games.css" layer(legacy);
-@import "../components/LevelUpNotification.css" layer(legacy);
 @import "../components/Navbar/SocialSidebar.css" layer(legacy);
 @import "../components/Styles/UserProfileModal.css" layer(legacy);
 @import "../pages/Styles/Dashboard.css" layer(legacy);

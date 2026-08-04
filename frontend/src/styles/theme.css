@@ -126,6 +126,25 @@
   --duration-flood: 900ms;
   --duration-warm: 400ms;
   --duration-hair: 160ms;
+
+  /* Entrances. A surface arrives from the edge it is anchored to, so the motion
+     reads as the thing sliding into the room rather than materialising in it. */
+  --animate-enter-right: enter-right var(--duration-warm) var(--ease-beam);
+  --animate-enter-up: enter-up var(--duration-warm) var(--ease-beam);
+
+  @keyframes enter-right {
+    from {
+      opacity: 0;
+      transform: translateX(1.5rem);
+    }
+  }
+
+  @keyframes enter-up {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+  }
 }
 
 /* Daylight mode: the source world's own ground, for daytime use. */

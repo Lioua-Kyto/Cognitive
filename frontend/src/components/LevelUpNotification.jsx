@@ -1,71 +1,54 @@
-import React, { useEffect } from "react";
 import { useLevelUp } from "../context/LevelUpContext";
+import Button from "../ui/Button.jsx";
+import Dialog from "../ui/Dialog.jsx";
 
+/**
+ * The level-up moment.
+ *
+ * The version this replaces was an unlabelled overlay with forty animated
+ * particles and a line reading "You're now in the top N% of all players" — where
+ * N was `100 - level * 8`, invented on the client. There is no ranking behind it,
+ * so it is gone. What is left is the one thing that is actually true: the number
+ * went up.
+ */
 const LevelUpNotification = () => {
   const { levelUpData, clearLevelUp } = useLevelUp();
-
-  useEffect(() => {
-    // Removed auto-dismiss - notification now stays until user clicks continue
-  }, [levelUpData, clearLevelUp]);
 
   if (!levelUpData) return null;
 
   return (
-    <div className="level-up-overlay">
-      <div className="level-up-notification">
-        {/* Animated background elements */}
-        <div className="celebration-particles">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div
-              key={i}
-              className="particle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${3 + Math.random() * 2}s`,
-              }}
-            />
-          ))}
+    <Dialog open onClose={clearLevelUp} size="sm">
+      <div className="flex flex-col items-center text-center">
+        <p className="font-label text-label text-beam">Level up</p>
+
+        {/* The beam arriving in the room, drawn once rather than confettied. */}
+        <div className="relative mt-6 flex size-28 items-center justify-center">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 rounded-full bg-beam/12 blur-xl"
+          />
+          <div className="relative flex size-full items-center justify-center rounded-full border border-beam">
+            <span
+              data-figure
+              className="text-figure-xl font-semibold text-beam"
+            >
+              {levelUpData.newLevel}
+            </span>
+          </div>
         </div>
 
-        {/* Main content */}
-        <div className="level-up-content">
-          <div className="level-up-icon">
-            <div className="level-badge">
-              <span className="notification-level-number">
-                {levelUpData.newLevel}
-              </span>
-            </div>
-            <div className="level-up-glow"></div>
-          </div>
+        <h2 className="mt-6 font-display text-heading-m text-lit">
+          You reached level {levelUpData.newLevel}
+        </h2>
+        <p data-figure className="mt-2 text-body-s text-ink-muted">
+          {levelUpData.oldLevel} → {levelUpData.newLevel}
+        </p>
 
-          <div className="level-up-text">
-            <h1 className="level-up-title">LEVEL UP!</h1>
-            <p className="level-up-subtitle">
-              Level {levelUpData.oldLevel} → {levelUpData.newLevel}
-            </p>
-
-            <div className="level-up-ranking">
-              <p className="ranking-text">
-                🏆 You're now in the top{" "}
-                <strong>
-                  {Math.max(
-                    1,
-                    Math.round(100 - (levelUpData.newLevel || 1) * 8)
-                  )}
-                  %
-                </strong>{" "}
-                of all players!
-              </p>
-            </div>
-          </div>
-
-          <button className="level-up-close" onClick={clearLevelUp}>
-            Continue
-          </button>
-        </div>
+        <Button className="mt-8 w-full" onClick={clearLevelUp}>
+          Continue
+        </Button>
       </div>
-    </div>
+    </Dialog>
   );
 };
 
