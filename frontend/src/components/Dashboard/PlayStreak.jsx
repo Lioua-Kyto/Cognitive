@@ -1,66 +1,80 @@
-import { useState, useEffect } from "react";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-const PlayStreak = ({ userStats }) => {
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [longestStreak, setLongestStreak] = useState(0);
-  const [weeklyActivity, setWeeklyActivity] = useState([]);
+const isoDate = (date) => date.toISOString().split("T")[0];
 
-  useEffect(() => {
-    // Generate 7 days: 4 days ago to 2 days ahead
-    const today = new Date();
-    const weekActivity = [];
+/**
+ * The last seven days of practice.
+ *
+ * The version this replaces built its window from `i = 4` down to `i = -2`,
+ * which is four days back to two days *ahead* — so a third of the strip was the
+ * future, drawn as days you had failed to practise. It also carried its three
+ * pieces of state in useState and refilled them from an effect on every render
+ * of the parent, for values that are a pure function of the props.
+ */
+export default function PlayStreak({ userStats }) {
+  const played = new Set(userStats?.playedDates ?? []);
+  const today = new Date();
 
-    for (let i = 4; i >= -2; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      weekActivity.push({
-        date: date.toISOString().split("T")[0],
-        hasActivity:
-          userStats?.playedDates?.includes(date.toISOString().split("T")[0]) ||
-          false,
-      });
-    }
-
-    setWeeklyActivity(weekActivity);
-    setCurrentStreak(userStats?.currentStreak || 0);
-    setLongestStreak(userStats?.longestStreak || 0);
-  }, [userStats]);
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(today.getTime() - (6 - index) * DAY_MS);
+    return {
+      iso: isoDate(date),
+      label: date.toLocaleDateString(undefined, { weekday: "narrow" }),
+      full: date.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }),
+      trained: played.has(isoDate(date)),
+    };
+  });
 
   return (
-    <div className="play-streak-container">
-      <h3 className="streak-title">Play Streak</h3>
+    <section aria-labelledby="streak-heading">
+      <h3 id="streak-heading" className="font-label text-label text-ink-faint">
+        Practice
+      </h3>
 
-      <div className="streak-stats">
-        <div className="streak-stat">
-          <div className="streak-number">{currentStreak}</div>
-          <div className="streak-label">Current</div>
+      <div className="mt-3 flex flex-wrap items-end gap-8">
+        <div className="flex gap-6">
+          <p>
+            <span data-figure className="text-figure text-lit">
+              {userStats?.currentStreak ?? 0}
+            </span>
+            <span className="font-label ml-2 text-label text-ink-faint">
+              current
+            </span>
+          </p>
+          <p>
+            <span data-figure className="text-figure text-lit">
+              {userStats?.longestStreak ?? 0}
+            </span>
+            <span className="font-label ml-2 text-label text-ink-faint">
+              longest
+            </span>
+          </p>
         </div>
-        <div className="streak-stat">
-          <div className="streak-number">{longestStreak}</div>
-          <div className="streak-label">Longest</div>
-        </div>
-      </div>
 
-      <div className="weekly-activity">
-        {weeklyActivity.map((day, index) => (
-          <div
-            key={index}
-            className={`activity-day ${day.hasActivity ? "active" : ""}`}
-            title={day.date}
-          >
-            <div className="activity-flame">
-              {day.hasActivity ? "🔥" : "⚪"}
-            </div>
-            <div className="activity-date">
-              {new Date(day.date).toLocaleDateString("en-US", {
-                weekday: "short",
-              })}
-            </div>
-          </div>
-        ))}
+        <ul className="flex gap-1.5">
+          {days.map((day) => (
+            <li key={day.iso} className="flex flex-col items-center gap-1.5">
+              {/* A lit day is a room with the sun in it. An unlit one is not a
+                  failure, just unlit. */}
+              <span
+                className={`block size-7 rounded-hair ${
+                  day.trained ? "bg-beam" : "border border-rule bg-surface"
+                }`}
+              />
+              <span className="font-label text-label text-ink-faint">
+                {day.label}
+              </span>
+              <span className="sr-only">
+                {day.full} — {day.trained ? "trained" : "no session"}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+    </section>
   );
-};
-
-export default PlayStreak;
+}

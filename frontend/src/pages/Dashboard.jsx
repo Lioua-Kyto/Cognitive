@@ -11,12 +11,50 @@ import {
 import { AchievementsAPI } from "../api/achievements.jsx";
 import { queryKeys } from "../queries/keys.js";
 import PlayStreak from "../components/Dashboard/PlayStreak";
+import Button from "../ui/Button.jsx";
+import StatTile from "../ui/StatTile.jsx";
 
 const mostRecentlyEarned = (items, count) =>
   (items ?? [])
     .filter((item) => item.is_earned && item.earned_date)
     .sort((a, b) => new Date(b.earned_date) - new Date(a.earned_date))
     .slice(0, count);
+
+const shortDate = (value) => new Date(value).toLocaleDateString();
+
+function AwardList({ items, empty }) {
+  if (items.length === 0) {
+    return <p className="mt-3 text-body-s text-ink-faint">{empty}</p>;
+  }
+
+  return (
+    <ul className="mt-3 flex flex-col">
+      {items.map((item) => (
+        <li
+          key={item.id}
+          className="flex items-center gap-3 border-b border-rule py-2.5 last:border-b-0"
+        >
+          <span aria-hidden="true" className="text-body">
+            {item.icon}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-body-s text-lit">
+              {item.name}
+            </span>
+            <span data-figure className="block text-body-s text-ink-faint">
+              {shortDate(item.earned_date)}
+            </span>
+          </span>
+          {item.points != null && (
+            <span data-figure className="text-body-s text-beam">
+              +{item.points}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function Dashboard() {
   const { token, user } = useContext(AuthContext);
@@ -62,334 +100,174 @@ export default function Dashboard() {
   const recentBadges = mostRecentlyEarned(awardsQ.data?.badges, 3);
 
   // Only the profile is load-bearing; the rest degrade to empty sections.
-  const loading = profileQ.isPending && enabled;
-  const error = profileQ.error ? "Failed to load dashboard data" : "";
+  if (profileQ.isPending && enabled) {
+    return <p className="py-storey-half text-body text-ink-muted">Loading…</p>;
+  }
 
-  if (loading) {
+  if (profileQ.error) {
     return (
-      <div className="dashboard-container">
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p>Loading your dashboard...</p>
-        </div>
+      <div className="py-storey-half">
+        <h2 className="font-display text-heading-m text-lit">
+          Could not load your dashboard
+        </h2>
+        <Button className="mt-4" onClick={() => profileQ.refetch()}>
+          Try again
+        </Button>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="dashboard-container">
-        <div className="error-state">
-          <h3>Unable to load dashboard</h3>
-          <p>{error}</p>
-          <button onClick={() => profileQ.refetch()}>Try Again</button>
-        </div>
-      </div>
-    );
-  }
+  const trend = gameStats?.improvement_trend ?? 0;
 
   return (
-    <div className="dashboard-container">
-      {/* Welcome Section */}
-      <div className="welcome-section">
-        <div className="welcome-content">
-          <h1 className="welcome-title">
-            Welcome back, {profile?.username || "Player"}!
-          </h1>
-          <p className="welcome-subtitle">
-            Ready to challenge your mind today?
-          </p>
-        </div>
-        <div className="welcome-stats">
-          <div className="stat-card">
-            <div className="stat-number">{globalRank?.rank || "N/A"}</div>
-            <div className="stat-label">Global Rank</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">{gameStats?.total_games || 0}</div>
-            <div className="stat-label">Games Played</div>
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-storey-half py-storey-half">
+      <section aria-labelledby="dashboard-heading">
+        <h2
+          id="dashboard-heading"
+          className="font-display text-heading-l text-lit"
+        >
+          Welcome back, {profile?.username || "player"}
+        </h2>
 
-      {/* Play Streak - Full Width */}
-      <div className="play-streak-full-width">
-        <PlayStreak userStats={gameStats} />
-      </div>
-
-      {/* Main Dashboard Grid */}
-      <div className="dashboard-grid">
-        {/* Recent Activity */}
-        <div className="dashboard-card dashboard-card-recent-games">
-          <h3 className="card-title">Recent Games</h3>
-          <div className="recent-games">
-            {recentGames.length > 0 ? (
-              recentGames.slice(0, 5).map((game, index) => (
-                <div key={index} className="recent-game-item">
-                  <div className="recent-game-info">
-                    <div className="recent-game-name">{game.game_name}</div>
-                    <div className="recent-game-category">{game.category}</div>
-                  </div>
-                  <div className="recent-game-stats">
-                    <div className="recent-game-score">Score: {game.score}</div>
-                    <div className="recent-game-xp">+{game.xp_earned} XP</div>
-                  </div>
-                  <div className="recent-game-date">
-                    {new Date(game.created_at).toLocaleDateString()}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="no-recent-games">
-                <p>No recent games yet. Start playing to see your activity!</p>
-                <Link to="/games" className="btn btn-primary">
-                  Play Games
-                </Link>
-              </div>
-            )}
-          </div>
+        <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-room bg-rule sm:grid-cols-4">
+          <StatTile
+            label="Global rank"
+            value={globalRank?.rank ? `#${globalRank.rank}` : "—"}
+          />
+          <StatTile label="Sessions" value={gameStats?.total_games ?? 0} />
+          <StatTile
+            label="Domains trained"
+            value={`${gameStats?.categories_played ?? 0}/7`}
+          />
+          <StatTile
+            label="Average score"
+            value={
+              gameStats?.average_score != null
+                ? Math.round(gameStats.average_score)
+                : "—"
+            }
+          />
         </div>
+      </section>
 
-        {/* Performance Overview */}
-        <div className="dashboard-card">
-          <h3 className="card-title">Performance Overview</h3>
-          <div className="performance-stats">
-            <div className="performance-item">
-              <span className="performance-label">Best Category</span>
-              <span className="performance-value">
-                {gameStats?.best_category || "N/A"}
-              </span>
+      <PlayStreak userStats={gameStats} />
+
+      <div className="grid gap-storey-half lg:grid-cols-2">
+        <section aria-labelledby="recent-heading">
+          <h3
+            id="recent-heading"
+            className="font-label text-label text-ink-faint"
+          >
+            Recent sessions
+          </h3>
+          {recentGames.length === 0 ? (
+            <div className="mt-3">
+              <p className="text-body-s text-ink-faint">
+                Nothing here yet. Your sessions will appear as you train.
+              </p>
+              <Link
+                to="/games"
+                className="mt-4 inline-flex h-10 items-center rounded-hair bg-beam px-4 text-body font-medium text-poche transition-colors duration-hair hover:bg-beam-deep"
+              >
+                Pick a domain
+              </Link>
             </div>
-            <div className="performance-item">
-              <span className="performance-label">Average Score</span>
-              <span className="performance-value">
-                {gameStats?.average_score || "0"}%
-              </span>
-            </div>
-            <div className="performance-item">
-              <span className="performance-label">Improvement</span>
-              <span className="performance-value">
-                {gameStats?.improvement_trend > 0
-                  ? "↗️"
-                  : gameStats?.improvement_trend < 0
-                  ? "↘️"
-                  : "→"}
-                {Math.abs(gameStats?.improvement_trend || 0)}%
-              </span>
-            </div>
-          </div>
-        </div>
+          ) : (
+            <ul className="mt-3 flex flex-col">
+              {recentGames.slice(0, 5).map((game, index) => (
+                <li
+                  key={`${game.game_name}-${game.created_at}-${index}`}
+                  className="flex items-baseline gap-3 border-b border-rule py-2.5 last:border-b-0"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-body-s text-lit">
+                      {game.game_name}
+                    </span>
+                    <span className="font-label text-label text-ink-faint">
+                      {game.category}
+                    </span>
+                  </span>
+                  <span data-figure className="text-body-s text-ink">
+                    {game.score}
+                  </span>
+                  <span data-figure className="w-16 text-right text-body-s text-beam">
+                    +{game.xp_earned} XP
+                  </span>
+                  <span
+                    data-figure
+                    className="hidden w-24 text-right text-body-s text-ink-faint sm:block"
+                  >
+                    {shortDate(game.created_at)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-        {/* Recent Achievements - Scrollable, Only Unlocked */}
-        <div className="dashboard-card">
-          <h3 className="card-title">🏆 Achievements</h3>
-          <div className="recent-achievements scrollable">
-            {recentAchievements.length > 0 ? (
-              <div className="achievements-list">
-                {recentAchievements.map((achievement) => (
-                  <div key={achievement.id} className="achievement-item">
-                    <div className="achievement-icon-small">
-                      {achievement.icon}
-                    </div>
-                    <div className="achievement-info">
-                      <div className="achievement-name-small">
-                        {achievement.name}
-                      </div>
-                      <div className="achievement-date">
-                        {new Date(achievement.earned_date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="achievement-points-small">
-                      +{achievement.points}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="no-achievements">
-                <p>
-                  No achievements earned yet. Start playing to unlock your first
-                  achievement!
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Daily Challenge */}
-        <div className="dashboard-card">
-          <h3 className="card-title">💎 Daily Challenge</h3>
-          <div className="daily-challenge">
-            <div className="challenge-header">
-              <div className="challenge-icon">🧠</div>
-              <div className="challenge-info">
-                <div className="challenge-title">Memory Marathon</div>
-                <div className="challenge-desc">
-                  Complete 3 memory games with 70% accuracy
-                </div>
-              </div>
+        <section aria-labelledby="standing-heading">
+          <h3
+            id="standing-heading"
+            className="font-label text-label text-ink-faint"
+          >
+            Standing
+          </h3>
+          <dl className="mt-3 flex flex-col">
+            <div className="flex items-baseline justify-between gap-3 border-b border-rule py-2.5">
+              <dt className="text-body-s text-ink-muted">Strongest domain</dt>
+              <dd className="text-body-s text-lit capitalize">
+                {gameStats?.best_category || "—"}
+              </dd>
             </div>
-            <div className="challenge-progress-bar">
-              <div className="progress-fill" style={{ width: "33%" }}></div>
+            <div className="flex items-baseline justify-between gap-3 border-b border-rule py-2.5">
+              <dt className="text-body-s text-ink-muted">Levels cleared</dt>
+              <dd data-figure className="text-body-s text-lit">
+                {gameStats?.total_levels ?? 0}
+              </dd>
             </div>
-            <div className="challenge-reward">
-              <span className="reward-text">Reward: +50 XP</span>
-              <span className="challenge-time">Resets in 14h 32m</span>
+            <div className="flex items-baseline justify-between gap-3 py-2.5">
+              <dt className="text-body-s text-ink-muted">
+                Recent score trend
+              </dt>
+              <dd
+                data-figure
+                className={`text-body-s ${
+                  trend > 0
+                    ? "text-positive"
+                    : trend < 0
+                      ? "text-negative"
+                      : "text-ink-muted"
+                }`}
+              >
+                {trend > 0 ? "+" : ""}
+                {trend}%
+              </dd>
             </div>
-          </div>
-        </div>
+          </dl>
+        </section>
 
-        {/* Training Tip */}
-        <div className="dashboard-card">
-          <h3 className="card-title">💡 Training Tip</h3>
-          <div className="training-tip">
-            <div className="tip-icon">🎯</div>
-            <div className="tip-content">
-              <div className="tip-title">Focus Training</div>
-              <div className="tip-text">
-                Practice attention games in a quiet environment to improve
-                concentration. Even 10 minutes daily can enhance your focus
-                abilities!
-              </div>
-            </div>
-          </div>
-        </div>
+        <section aria-labelledby="achievements-heading">
+          <h3
+            id="achievements-heading"
+            className="font-label text-label text-ink-faint"
+          >
+            Achievements
+          </h3>
+          <AwardList
+            items={recentAchievements}
+            empty="None yet. They unlock as you train."
+          />
+        </section>
 
-        {/* Recent Badges - Scrollable, Only Unlocked */}
-        <div className="dashboard-card">
-          <h3 className="card-title">🎖️ Badges</h3>
-          <div className="recent-badges scrollable">
-            {recentBadges.length > 0 ? (
-              <div className="badges-list">
-                {recentBadges.map((badge) => (
-                  <div key={badge.id} className="badge-item">
-                    <div
-                      className="badge-icon-small"
-                      style={{ color: badge.color }}
-                    >
-                      {badge.icon}
-                    </div>
-                    <div className="badge-info">
-                      <div className="badge-name-small">{badge.name}</div>
-                      <div className="badge-date">
-                        {new Date(badge.earned_date).toLocaleDateString()}
-                      </div>
-                    </div>
-                    {badge.is_rare && (
-                      <div className="rare-indicator-small">✨</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="no-badges">
-                <p>
-                  No badges earned yet. Complete challenges to earn your first
-                  badge!
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Featured Games */}
-        <div className="dashboard-card dashboard-card-wide">
-          <h3 className="card-title">Featured Games</h3>
-          <div className="featured-games">
-            <Link
-              to="/games/memory/number-recall"
-              className="featured-game-card"
-              data-category="memory"
-            >
-              <div
-                className="featured-game-image"
-                style={{
-                  backgroundImage: `url('/src/assets/Pictures/Games/Memory/NumberRecall.jpeg')`,
-                }}
-              ></div>
-              <div className="featured-game-content">
-                <h4 className="featured-game-title">Number Recall</h4>
-                <p className="featured-game-description">
-                  Challenge your working memory with number sequences
-                </p>
-                <div className="featured-game-category">Memory</div>
-              </div>
-            </Link>
-
-            <Link
-              to="/games/memory/digit-span"
-              className="featured-game-card"
-              data-category="memory"
-            >
-              <div
-                className="featured-game-image"
-                style={{
-                  backgroundImage: `url('/src/assets/Pictures/Games/Memory/4.jpg')`,
-                }}
-              ></div>
-              <div className="featured-game-content">
-                <h4 className="featured-game-title">Digit Span</h4>
-                <p className="featured-game-description">
-                  Test your memory span with digit sequences
-                </p>
-                <div className="featured-game-category">Memory</div>
-              </div>
-            </Link>
-
-            <Link
-              to="/games/memory/card-flip-memory"
-              className="featured-game-card"
-              data-category="memory"
-            >
-              <div
-                className="featured-game-image"
-                style={{
-                  backgroundImage: `url('/src/assets/Pictures/Games/Memory/1.jpg')`,
-                }}
-              ></div>
-              <div className="featured-game-content">
-                <h4 className="featured-game-title">Memory Cards</h4>
-                <p className="featured-game-description">
-                  Classic memory matching game with cards
-                </p>
-                <div className="featured-game-category">Memory</div>
-              </div>
-            </Link>
-          </div>
-        </div>
-
-        {/* Brain Health Score */}
-        <div className="dashboard-card">
-          <h3 className="card-title">🧠 Brain Health Score</h3>
-          <div className="brain-health-score">
-            <div className="score-display">
-              <div className="score-number">
-                {gameStats?.brain_health_score || 75}
-              </div>
-              <div className="score-label">Health Score</div>
-            </div>
-            <div className="score-breakdown">
-              <div className="score-item">
-                <span className="score-metric">Memory</span>
-                <span className="score-value">
-                  {gameStats?.memory_score || 78}%
-                </span>
-              </div>
-              <div className="score-item">
-                <span className="score-metric">Attention</span>
-                <span className="score-value">
-                  {gameStats?.attention_score || 72}%
-                </span>
-              </div>
-              <div className="score-item">
-                <span className="score-metric">Processing</span>
-                <span className="score-value">
-                  {gameStats?.processing_score || 76}%
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <section aria-labelledby="badges-heading">
+          <h3
+            id="badges-heading"
+            className="font-label text-label text-ink-faint"
+          >
+            Badges
+          </h3>
+          <AwardList items={recentBadges} empty="None yet." />
+        </section>
       </div>
     </div>
   );
