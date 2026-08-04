@@ -160,12 +160,16 @@ Checkbox, Radio, Switch, Slider, Tooltip, Skeleton, Popover, Toast, and the
 composed set (StatTile, TrendChart, DomainRadar, StreakStrip, SessionShell,
 Timer, ResultPanel).
 
-**The social surfaces are unverified in a browser.** `/social`, the navbar's
-social sheet and the profile modal are all behind auth, and there is no
-signed-out route that renders them, so the contrast walk has never run against
-them. They are covered by render tests instead. If you have a signed-in session,
-run the walk on `/social` with a chat open and a friend list populated — that is
-the one outstanding check on group 1.
+**Verifying anything behind auth: `make demo`.** Social, Profile and Dashboard
+render almost nothing against an empty database. `make demo` builds an account
+with friends, requests both ways, a chat history with unread messages and ~70
+days of results across all seven domains, then prints a token you can paste into
+`localStorage` to skip the sign-in form. `make demo ARGS="--reset"` rebuilds it.
+It refuses to run unless `DEBUG` is on.
+
+Group 1 has been through the contrast walk on 4173 against that data — Social
+(all three tabs, chat open), the navbar sheet, the profile modal, the level-up
+dialog and the toast stack. All clean.
 
 **Not started:** the accessibility sweep against `docs/design-direction.md` §9,
 and the motion budget on a throttled profile.

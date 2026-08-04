@@ -11,23 +11,6 @@ import Avatar from "../ui/Avatar.jsx";
 import Button from "../ui/Button.jsx";
 import Dialog from "../ui/Dialog.jsx";
 
-const COUNTRY_CODES = {
-  algeria: "dz",
-  "united states": "us",
-  "united kingdom": "gb",
-  france: "fr",
-  germany: "de",
-  spain: "es",
-  italy: "it",
-  canada: "ca",
-  australia: "au",
-};
-
-const flagUrl = (countryName) => {
-  const name = countryName.toLowerCase();
-  return `${API_ORIGIN}/static/flags/${COUNTRY_CODES[name] ?? name.slice(0, 2)}.svg`;
-};
-
 function Stat({ label, value }) {
   return (
     <div className="bg-surface p-4 text-center">
@@ -142,14 +125,18 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
         <div className="min-w-0 flex-1">
           {countryName && (
             <p className="flex items-center gap-2 text-body-s text-ink-muted">
-              <img
-                src={flagUrl(countryName)}
-                alt=""
-                className="h-3 w-auto"
-                onError={(e) => {
-                  e.target.style.display = "none";
-                }}
-              />
+              {/* The code comes from the server, which has it. Deriving it from
+                  the display name drew Australia's flag beside "Austria". */}
+              {user.country_code && (
+                <img
+                  src={`${API_ORIGIN}/static/flags/${user.country_code}.svg`}
+                  alt=""
+                  className="h-3 w-auto"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                />
+              )}
               {countryName}
             </p>
           )}
