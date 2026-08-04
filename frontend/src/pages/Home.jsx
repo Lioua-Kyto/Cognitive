@@ -69,11 +69,9 @@ export default function Home() {
             where you are strong and where you are not.
           </p>
 
-          <SectionDrawing
-            rooms={rooms}
-            beam={progress}
-            className="mt-10 h-[clamp(200px,30vh,340px)]"
-          />
+          {/* No fixed height: the drawing carries its own aspect ratio, and
+              forcing one non-uniformly is what made it read as bars. */}
+          <SectionDrawing rooms={rooms} beam={progress} className="mt-10" />
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link

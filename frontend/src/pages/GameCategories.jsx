@@ -59,7 +59,7 @@ export default function GameCategories() {
           rooms={rooms}
           beam={beam}
           onSelectRoom={(room) => navigate(`/games/${room.key}`)}
-          className="mt-8 h-[clamp(180px,28vw,320px)]"
+          className="mt-8"
         />
       </section>
 
