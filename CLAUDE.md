@@ -134,31 +134,33 @@ Direction is **THE SECTION** — a building drawn in section, seven rooms, one p
 domain, lit by where the user is strong. Full rationale in
 `docs/design-direction.md`.
 
-**Done:** Tailwind 4 token layer, Bootstrap removed, the `@layer legacy` fix, the
-scroll shell fix, `SectionDrawing` + beam, and these surfaces — Home,
-Leaderboard, GameList, GameCategories, Navbar, Footer, Auth, and all of group 1
-(Social, the social sidebar, the profile modal, both notifications, the
-achievement tooltip).
+**Phase 3 is done.** Tailwind 4 token layer, Bootstrap removed, the
+`@layer legacy` fix, the scroll shell fix, `SectionDrawing` + beam, and every
+non-game surface: Home, Leaderboard, GameList, GameCategories, Navbar, Footer,
+Auth, Social, the social sidebar, the profile modal, both notifications, the
+achievement tooltip, Dashboard, PlayStreak, ProfileVisit and Profile.
 
-**Left — 12 stylesheets in `src/styles/legacy.css`:**
+**Left — 8 stylesheets in `src/styles/legacy.css`, all phase 4:**
 
-1. **Profile, Dashboard, ProfileVisit, PlayStreak (4)** — start here.
-   `Profile.jsx` is ~2,000 lines with a 1,250-line JSX return. Decompose before
-   restyling; the Social page rebuild is the worked example (five components out
-   of one 1,112-line file).
-2. **Session shell and result (7)** — `GameLayout`, `GameHeader`,
+1. **Session shell and result (7)** — `GameLayout`, `GameHeader`,
    `GameIntroPanel`, `GamePauseModal`, `GameResultPopup`, `GameHelpModal`,
-   `games.css`. **Defer to phase 4.** They are welded to the render-prop stack
-   the game engine replaces; rebuilding now means doing it twice.
-3. **`layout.css` — last.** Everything still leans on it.
+   `games.css`. They are welded to the render-prop stack the game engine
+   replaces; rebuilding now means doing it twice.
+2. **`layout.css` — last.** Everything still leans on it. `theme.test.js`
+   asserts it still contains `overflow:hidden`, so it will fail the day this
+   goes and tell you the shell overrides in `theme.css` can go too.
 
-**Primitives: 7 of ~30.** Built: `Button`, `Field` (+`Input`), `Dialog`, `Sheet`,
-`Tabs`, `Avatar`, and `useModalSurface` — the focus-trap/Escape/scroll-lock
-contract Dialog and Sheet share, so a new modal surface never re-rolls it.
-`Dialog.test.jsx` and `Tabs.test.jsx` pin those contracts. Missing: Select,
-Checkbox, Radio, Switch, Slider, Tooltip, Skeleton, Popover, Toast, and the
-composed set (StatTile, TrendChart, DomainRadar, StreakStrip, SessionShell,
-Timer, ResultPanel).
+**Primitives: 11 of ~30.** Built: `Button`, `Field` (+`Input`), `Select`,
+`Dialog`, `Sheet`, `Tabs`, `Avatar`, `StatTile`, `Toaster`, and
+`useModalSurface` — the focus-trap/Escape/scroll-lock contract Dialog and Sheet
+share, so a new modal surface never re-rolls it. `Dialog.test.jsx` and
+`Tabs.test.jsx` pin those contracts. Missing: Checkbox, Radio, Switch, Slider,
+Tooltip, Skeleton, Popover, and the composed set (TrendChart, DomainRadar,
+SessionShell, Timer, ResultPanel).
+
+Chart styling lives in `components/Profile/chartTheme.js` and reads the token
+layer, so charts follow the theme toggle. Don't reintroduce inline Chart.js
+colour options.
 
 **Verifying anything behind auth: `make demo`.** Social, Profile and Dashboard
 render almost nothing against an empty database. `make demo` builds an account
@@ -167,9 +169,19 @@ days of results across all seven domains, then prints a token you can paste into
 `localStorage` to skip the sign-in form. `make demo ARGS="--reset"` rebuilds it.
 It refuses to run unless `DEBUG` is on.
 
-Group 1 has been through the contrast walk on 4173 against that data — Social
-(all three tabs, chat open), the navbar sheet, the profile modal, the level-up
-dialog and the toast stack. All clean.
+Every rebuilt surface has been through the contrast walk on 4173 against that
+data — Social (all three tabs, chat open), the navbar sheet, the profile modal,
+the level-up dialog, the toast stack, Profile (all five tabs) and ProfileVisit.
+Clean, plus: one `h1` per page, no skipped heading levels, no unlabelled inputs,
+no legacy class names left in the DOM.
+
+**The seeder earns its keep.** Bugs it surfaced within an hour, none of which
+any test caught: Australia's flag drawn beside "Austria"; three sections of
+ProfileVisit that had never rendered because the code checked `.success` on
+functions returning an array; a Dashboard inventing a "Brain Health Score"; a
+PlayStreak strip showing two days of the future; and every `showNotification`
+call in the app going into an array nothing rendered. Run it before you trust a
+surface you have only read.
 
 **Not started:** the accessibility sweep against `docs/design-direction.md` §9,
 and the motion budget on a throttled profile.
@@ -192,7 +204,7 @@ and the motion budget on a throttled profile.
   phase 4 item. No leaderboard copy may claim integrity until it lands.
 - `GameLayout` calls `useEffect` inside a render-prop callback (2 eslint errors).
   Dies with the phase 4 rewrite.
-- ~193 eslint findings, nearly all in files the redesign replaces. CI reports
+- ~177 eslint findings, nearly all in the game components phase 4 replaces. CI reports
   frontend lint but does not gate on it.
 - 2 ruff `DJ001` findings — `null=True` on CharField; fixing needs a data
   migration.
