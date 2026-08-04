@@ -1960,3 +1960,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Carried over from ProfileVisit.css, which this page was borrowing them from.
+   Dies with the rest of this file when Profile is rebuilt. */
+.game-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.game-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}

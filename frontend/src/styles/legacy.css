@@ -19,4 +19,3 @@
 @import "../components/Games/Layout/Styles/GameResultPopup.css" layer(legacy);
 @import "../components/Games/Styles/games.css" layer(legacy);
 @import "../pages/Styles/Profile.css" layer(legacy);
-@import "../pages/Styles/ProfileVisit.css" layer(legacy);
