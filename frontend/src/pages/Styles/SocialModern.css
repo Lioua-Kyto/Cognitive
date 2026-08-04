@@ -175,6 +175,12 @@
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
+/* Moved here from SocialSidebar.css, which this page was borrowing it from.
+   Dies with the rest of this file when the Social page is rebuilt. */
+.social-friends-section {
+  padding: 20px;
+}
+
 .social-sidebar-content::-webkit-scrollbar {
   width: 6px;
 }

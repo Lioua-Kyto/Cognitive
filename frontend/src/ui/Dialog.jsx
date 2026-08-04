@@ -1,8 +1,6 @@
-import { useEffect, useId, useRef } from "react";
+import { useId } from "react";
 import { createPortal } from "react-dom";
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+import useModalSurface from "./useModalSurface.js";
 
 /**
  * Accessible modal dialog.
@@ -20,58 +18,9 @@ export default function Dialog({
   footer,
   size = "md",
 }) {
-  const panelRef = useRef(null);
-  const restoreRef = useRef(null);
+  const panelRef = useModalSurface(open, onClose);
   const titleId = useId();
   const descriptionId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-
-    restoreRef.current = document.activeElement;
-
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
-
-    // Move focus in, preferring the first control over the panel itself.
-    const panel = panelRef.current;
-    const first = panel?.querySelector(FOCUSABLE);
-    (first ?? panel)?.focus();
-
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        onClose?.();
-        return;
-      }
-      if (event.key !== "Tab") return;
-
-      const focusable = Array.from(panel?.querySelectorAll(FOCUSABLE) ?? []);
-      if (focusable.length === 0) {
-        event.preventDefault();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown, true);
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      document.body.style.overflow = overflow;
-      // Focus restore is what makes a dialog dismissable without losing your place.
-      restoreRef.current?.focus?.();
-    };
-  }, [open, onClose]);
 
   if (!open) return null;
 

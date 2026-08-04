@@ -1,6 +1,52 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSocial } from "../../context/SocialContext";
 import { useNotifications } from "../../context/NotificationContext";
+import Button from "../../ui/Button.jsx";
+import Sheet from "../../ui/Sheet.jsx";
+import Tabs from "../../ui/Tabs.jsx";
+
+const formatTime = (timestamp) =>
+  new Date(timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+function Avatar({ name, src, status }) {
+  return (
+    <div className="relative shrink-0">
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          className="size-9 rounded-room border border-rule object-cover"
+        />
+      ) : (
+        <div className="flex size-9 items-center justify-center rounded-room border border-rule bg-surface-raised text-body-s text-ink-muted">
+          {name.charAt(0).toUpperCase()}
+        </div>
+      )}
+      {status && (
+        <span
+          role="img"
+          aria-label={status === "online" ? "Online" : "Offline"}
+          className={`absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-surface ${
+            status === "online" ? "bg-positive" : "bg-shadow"
+          }`}
+        />
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ title, body, action }) {
+  return (
+    <div className="py-storey-half text-center">
+      <p className="text-body text-ink">{title}</p>
+      <p className="mt-1 text-body-s text-ink-faint">{body}</p>
+      {action}
+    </div>
+  );
+}
 
 const SocialSidebar = ({ isOpen, onClose, onNavigateToSocial }) => {
   const {
@@ -11,24 +57,15 @@ const SocialSidebar = ({ isOpen, onClose, onNavigateToSocial }) => {
     getTotalUnreadCount,
     isConnected,
     openChat,
-    sendGlobalMessage,
-    sendPrivateMessage,
     acceptFriendRequest,
     rejectFriendRequest,
   } = useSocial();
 
   const { showNotification } = useNotifications();
-  const [activeQuickTab, setActiveQuickTab] = useState("notifications");
+  const [activeTab, setActiveTab] = useState("notifications");
 
   const totalUnreadCount = getTotalUnreadCount();
   const totalRequests = friendRequests.length;
-
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const handleQuickMessage = (friendId) => {
     openChat(friendId);
@@ -37,298 +74,231 @@ const SocialSidebar = ({ isOpen, onClose, onNavigateToSocial }) => {
   };
 
   const handleAcceptRequest = async (requestId) => {
-    try {
-      await acceptFriendRequest(requestId);
-      showNotification({
-        type: "success",
-        title: "Friend Request Accepted",
-        message: "You are now friends!",
-        icon: "👥",
-      });
-    } catch (error) {
-      console.error("Error accepting friend request:", error);
-    }
+    await acceptFriendRequest(requestId);
+    showNotification({
+      type: "success",
+      title: "Friend request accepted",
+      message: "You are now friends.",
+    });
   };
 
   const handleRejectRequest = async (requestId) => {
-    try {
-      await rejectFriendRequest(requestId);
-      showNotification({
-        type: "info",
-        title: "Friend Request Declined",
-        message: "Request has been declined.",
-        icon: "👋",
-      });
-    } catch (error) {
-      console.error("Error rejecting friend request:", error);
-    }
+    await rejectFriendRequest(requestId);
+    showNotification({
+      type: "info",
+      title: "Friend request declined",
+      message: "The request has been declined.",
+    });
   };
 
-  if (!isOpen) return null;
-
-  return (
-    <>
-      <div className="social-sidebar-overlay" onClick={onClose} />
-      <div className="social-sidebar-panel">
-        <div className="social-sidebar-header">
-          <div className="social-sidebar-title">
-            <span className="social-sidebar-icon">🌐</span>
-            <span>Social Hub</span>
-          </div>
-          <div className="social-sidebar-status">
-            <div
-              className={`social-status-indicator ${
-                isConnected ? "connected" : "disconnected"
-              }`}
+  const notifications = (
+    <div className="flex flex-col gap-6">
+      {totalRequests > 0 && (
+        <section aria-labelledby="sidebar-requests">
+          <h3
+            id="sidebar-requests"
+            className="font-label text-label text-ink-faint"
+          >
+            Friend requests
+          </h3>
+          <ul className="mt-3 flex flex-col gap-3">
+            {friendRequests.slice(0, 3).map((request) => (
+              <li key={request.id} className="flex gap-3">
+                <Avatar name={request.requester.username} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-body-s text-ink">
+                    <span className="text-lit">
+                      {request.requester.username}
+                    </span>{" "}
+                    sent you a friend request
+                  </p>
+                  <p data-figure className="mt-0.5 text-body-s text-ink-faint">
+                    {formatTime(request.created_at)}
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleAcceptRequest(request.id)}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRejectRequest(request.id)}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          {totalRequests > 3 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="mt-3"
+              onClick={onNavigateToSocial}
             >
-              {isConnected ? "Online" : "Offline"}
-            </div>
-          </div>
-          <button className="social-sidebar-close" onClick={onClose}>
-            ×
-          </button>
-        </div>
+              View all {totalRequests} requests
+            </Button>
+          )}
+        </section>
+      )}
 
-        <div className="social-sidebar-tabs">
-          <button
-            className={`social-sidebar-tab ${
-              activeQuickTab === "notifications" ? "active" : ""
-            }`}
-            onClick={() => setActiveQuickTab("notifications")}
+      {totalUnreadCount > 0 && (
+        <section aria-labelledby="sidebar-unread">
+          <h3
+            id="sidebar-unread"
+            className="font-label text-label text-ink-faint"
           >
-            🔔 Notifications
-            {totalUnreadCount + totalRequests > 0 && (
-              <span className="social-sidebar-badge">
-                {totalUnreadCount + totalRequests}
-              </span>
+            Unread messages
+          </h3>
+          <ul className="mt-3 flex flex-col gap-3">
+            {globalUnreadCount > 0 && (
+              <li className="flex items-center gap-3">
+                <Avatar name="Global" />
+                <p className="min-w-0 flex-1 text-body-s text-ink">
+                  <span className="text-lit">Global chat</span> has{" "}
+                  <span data-figure>{globalUnreadCount}</span> new messages
+                </p>
+                <Button size="sm" variant="ghost" onClick={onNavigateToSocial}>
+                  View
+                </Button>
+              </li>
             )}
-          </button>
-          <button
-            className={`social-sidebar-tab ${
-              activeQuickTab === "friends" ? "active" : ""
-            }`}
-            onClick={() => setActiveQuickTab("friends")}
-          >
-            👥 Friends
-            <span className="social-sidebar-badge-subtle">
-              {friends.length}
-            </span>
-          </button>
-        </div>
 
-        <div className="social-sidebar-content">
-          {activeQuickTab === "notifications" && (
-            <div className="social-notifications-section">
-              {/* Friend Requests */}
-              {friendRequests.length > 0 && (
-                <div className="social-notification-group">
-                  <h4 className="social-notification-group-title">
-                    📬 Friend Requests ({friendRequests.length})
-                  </h4>
-                  {friendRequests.slice(0, 3).map((request) => (
-                    <div
-                      key={request.id}
-                      className="social-notification-item request"
-                    >
-                      <div className="social-notification-avatar">
-                        {request.requester.username.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="social-notification-content">
-                        <div className="social-notification-text">
-                          <strong>{request.requester.username}</strong> sent you
-                          a friend request
-                        </div>
-                        <div className="social-notification-time">
-                          {formatTime(request.created_at)}
-                        </div>
-                        <div className="social-notification-actions">
-                          <button
-                            className="social-notification-btn accept"
-                            onClick={() => handleAcceptRequest(request.id)}
-                          >
-                            Accept
-                          </button>
-                          <button
-                            className="social-notification-btn decline"
-                            onClick={() => handleRejectRequest(request.id)}
-                          >
-                            Decline
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {friendRequests.length > 3 && (
-                    <button
-                      className="social-view-all-btn"
-                      onClick={onNavigateToSocial}
-                    >
-                      View all {friendRequests.length} requests
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Unread Messages */}
-              {totalUnreadCount > 0 && (
-                <div className="social-notification-group">
-                  <h4 className="social-notification-group-title">
-                    💬 Unread Messages ({totalUnreadCount})
-                  </h4>
-
-                  {globalUnreadCount > 0 && (
-                    <div className="social-notification-item message">
-                      <div className="social-notification-avatar global">
-                        🌐
-                      </div>
-                      <div className="social-notification-content">
-                        <div className="social-notification-text">
-                          <strong>Global Chat</strong> has {globalUnreadCount}{" "}
-                          new messages
-                        </div>
-                        <button
-                          className="social-notification-btn view"
-                          onClick={onNavigateToSocial}
-                        >
-                          View Chat
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {friends
-                    .filter((friend) => unreadCounts[friend.id] > 0)
-                    .slice(0, 3)
-                    .map((friend) => (
-                      <div
-                        key={friend.id}
-                        className="social-notification-item message"
-                      >
-                        <div className="social-notification-avatar">
-                          {friend.profile_picture ? (
-                            <img
-                              src={friend.profile_picture}
-                              alt={friend.username}
-                            />
-                          ) : (
-                            friend.username.charAt(0).toUpperCase()
-                          )}
-                        </div>
-                        <div className="social-notification-content">
-                          <div className="social-notification-text">
-                            <strong>{friend.username}</strong> sent{" "}
-                            {unreadCounts[friend.id]} new message
-                            {unreadCounts[friend.id] > 1 ? "s" : ""}
-                          </div>
-                          <button
-                            className="social-notification-btn view"
-                            onClick={() => handleQuickMessage(friend.id)}
-                          >
-                            Reply
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Empty State */}
-              {totalUnreadCount === 0 && totalRequests === 0 && (
-                <div className="social-empty-state">
-                  <div className="social-empty-icon">🔕</div>
-                  <div className="social-empty-title">All caught up!</div>
-                  <div className="social-empty-text">
-                    No new notifications or messages
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeQuickTab === "friends" && (
-            <div className="social-friends-section">
-              {friends.length === 0 ? (
-                <div className="social-empty-state">
-                  <div className="social-empty-icon">👥</div>
-                  <div className="social-empty-title">No friends yet</div>
-                  <div className="social-empty-text">
-                    Start building your network by adding friends
-                  </div>
-                  <button
-                    className="social-view-all-btn"
-                    onClick={onNavigateToSocial}
+            {friends
+              .filter((friend) => unreadCounts[friend.id] > 0)
+              .slice(0, 3)
+              .map((friend) => (
+                <li key={friend.id} className="flex items-center gap-3">
+                  <Avatar name={friend.username} src={friend.profile_picture} />
+                  <p className="min-w-0 flex-1 text-body-s text-ink">
+                    <span className="text-lit">{friend.username}</span> sent{" "}
+                    <span data-figure>{unreadCounts[friend.id]}</span> new
+                    message{unreadCounts[friend.id] > 1 ? "s" : ""}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleQuickMessage(friend.id)}
                   >
-                    Add Friends
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="social-friends-list">
-                    {friends.slice(0, 6).map((friend) => (
-                      <div key={friend.id} className="social-friend-quick-item">
-                        <div className="social-friend-quick-avatar">
-                          {friend.profile_picture ? (
-                            <img
-                              src={friend.profile_picture}
-                              alt={friend.username}
-                            />
-                          ) : (
-                            friend.username.charAt(0).toUpperCase()
-                          )}
-                          <div
-                            className={`social-friend-status-dot ${
-                              friend.status || "offline"
-                            }`}
-                          ></div>
-                        </div>
-                        <div className="social-friend-quick-info">
-                          <div className="social-friend-quick-name">
-                            {friend.username}
-                          </div>
-                          <div
-                            className={`social-friend-quick-status ${
-                              friend.status || "offline"
-                            }`}
-                          >
-                            {friend.status || "offline"}
-                          </div>
-                        </div>
-                        <button
-                          className="social-friend-quick-message"
-                          onClick={() => handleQuickMessage(friend.id)}
-                          title="Send message"
-                        >
-                          💬
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                    Reply
+                  </Button>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
-                  {friends.length > 6 && (
-                    <button
-                      className="social-view-all-btn"
-                      onClick={onNavigateToSocial}
-                    >
-                      View all {friends.length} friends
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
+      {totalUnreadCount === 0 && totalRequests === 0 && (
+        <EmptyState
+          title="Nothing waiting"
+          body="No new requests or unread messages."
+        />
+      )}
+    </div>
+  );
 
-        <div className="social-sidebar-footer">
-          <button
-            className="social-sidebar-open-full"
+  const friendsPanel =
+    friends.length === 0 ? (
+      <EmptyState
+        title="No friends yet"
+        body="Find people to train alongside."
+        action={
+          <Button size="sm" className="mt-4" onClick={onNavigateToSocial}>
+            Find people
+          </Button>
+        }
+      />
+    ) : (
+      <>
+        <ul className="flex flex-col">
+          {friends.slice(0, 6).map((friend) => (
+            <li
+              key={friend.id}
+              className="flex items-center gap-3 border-b border-rule py-3 last:border-b-0"
+            >
+              <Avatar
+                name={friend.username}
+                src={friend.profile_picture}
+                status={friend.status || "offline"}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-body-s text-lit">
+                  {friend.username}
+                </p>
+                <p className="text-body-s text-ink-faint">
+                  {friend.status || "offline"}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleQuickMessage(friend.id)}
+              >
+                Message
+              </Button>
+            </li>
+          ))}
+        </ul>
+        {friends.length > 6 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-3"
             onClick={onNavigateToSocial}
           >
-            <span>🚀</span>
-            Open Social Hub
-          </button>
-        </div>
-      </div>
-    </>
+            View all {friends.length} friends
+          </Button>
+        )}
+      </>
+    );
+
+  return (
+    <Sheet
+      open={isOpen}
+      onClose={onClose}
+      title="Social"
+      header={
+        <p className="mt-1 flex items-center gap-2 text-body-s text-ink-faint">
+          <span
+            aria-hidden="true"
+            className={`size-2 rounded-full ${
+              isConnected ? "bg-positive" : "bg-shadow"
+            }`}
+          />
+          {isConnected ? "Connected" : "Disconnected"}
+        </p>
+      }
+      footer={
+        <Button className="w-full" onClick={onNavigateToSocial}>
+          Open social hub
+        </Button>
+      }
+    >
+      <Tabs
+        label="Social sections"
+        active={activeTab}
+        onChange={setActiveTab}
+        tabs={[
+          {
+            id: "notifications",
+            label: "Notifications",
+            badge: totalUnreadCount + totalRequests,
+            content: <div className="pt-5">{notifications}</div>,
+          },
+          {
+            id: "friends",
+            label: "Friends",
+            badge: friends.length,
+            content: <div className="pt-2">{friendsPanel}</div>,
+          },
+        ]}
+      />
+    </Sheet>
   );
 };
 
