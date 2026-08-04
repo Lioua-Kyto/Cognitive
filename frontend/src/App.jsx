@@ -12,6 +12,7 @@ import Navbar from "./components/Layout/Navbar.jsx";
 import Footer from "./components/Layout/Footer.jsx";
 import AchievementNotification from "./components/AchievementNotification.jsx";
 import LevelUpNotification from "./components/LevelUpNotification.jsx";
+import Toaster from "./ui/Toaster.jsx";
 
 // Route-level code splitting. GameScreen in particular statically pulled in all
 // 25 game components and their audio, so every visitor downloaded the whole
@@ -101,6 +102,7 @@ function MainApp() {
       </main>
       <AchievementNotification />
       <LevelUpNotification />
+      <Toaster />
     </div>
   );
 }
