@@ -136,25 +136,36 @@ domain, lit by where the user is strong. Full rationale in
 
 **Done:** Tailwind 4 token layer, Bootstrap removed, the `@layer legacy` fix, the
 scroll shell fix, `SectionDrawing` + beam, and these surfaces — Home,
-Leaderboard, GameList, GameCategories, Navbar, Footer, Auth.
+Leaderboard, GameList, GameCategories, Navbar, Footer, Auth, and all of group 1
+(Social, the social sidebar, the profile modal, both notifications, the
+achievement tooltip).
 
-**Left — 18 stylesheets in `src/styles/legacy.css`:**
+**Left — 12 stylesheets in `src/styles/legacy.css`:**
 
-1. **Social, notifications, modals (6)** — `SocialModern`, `SocialSidebar`,
-   `AchievementNotification`, `AchievementTooltip`, `LevelUpNotification`,
-   `UserProfileModal`. Start here; they are self-contained.
-2. **Profile, Dashboard, ProfileVisit, PlayStreak (4)** — `Profile.jsx` is
-   ~2,000 lines with a 1,250-line JSX return. Decompose before restyling.
-3. **Session shell and result (7)** — `GameLayout`, `GameHeader`,
+1. **Profile, Dashboard, ProfileVisit, PlayStreak (4)** — start here.
+   `Profile.jsx` is ~2,000 lines with a 1,250-line JSX return. Decompose before
+   restyling; the Social page rebuild is the worked example (five components out
+   of one 1,112-line file).
+2. **Session shell and result (7)** — `GameLayout`, `GameHeader`,
    `GameIntroPanel`, `GamePauseModal`, `GameResultPopup`, `GameHelpModal`,
    `games.css`. **Defer to phase 4.** They are welded to the render-prop stack
    the game engine replaces; rebuilding now means doing it twice.
-4. **`layout.css` — last.** Everything still leans on it.
+3. **`layout.css` — last.** Everything still leans on it.
 
-**Primitives: 3 of ~30.** Built: `Button`, `Field` (+`Input`), `Dialog` (full
-focus-trap contract, tested). Missing: Select, Checkbox, Radio, Switch, Slider,
-Tooltip, Skeleton, Popover, Sheet, Toast, and the composed set (StatTile,
-TrendChart, DomainRadar, StreakStrip, SessionShell, Timer, ResultPanel).
+**Primitives: 7 of ~30.** Built: `Button`, `Field` (+`Input`), `Dialog`, `Sheet`,
+`Tabs`, `Avatar`, and `useModalSurface` — the focus-trap/Escape/scroll-lock
+contract Dialog and Sheet share, so a new modal surface never re-rolls it.
+`Dialog.test.jsx` and `Tabs.test.jsx` pin those contracts. Missing: Select,
+Checkbox, Radio, Switch, Slider, Tooltip, Skeleton, Popover, Toast, and the
+composed set (StatTile, TrendChart, DomainRadar, StreakStrip, SessionShell,
+Timer, ResultPanel).
+
+**The social surfaces are unverified in a browser.** `/social`, the navbar's
+social sheet and the profile modal are all behind auth, and there is no
+signed-out route that renders them, so the contrast walk has never run against
+them. They are covered by render tests instead. If you have a signed-in session,
+run the walk on `/social` with a chat open and a friend list populated — that is
+the one outstanding check on group 1.
 
 **Not started:** the accessibility sweep against `docs/design-direction.md` §9,
 and the motion budget on a throttled profile.
